@@ -1,64 +1,21 @@
-# # Import necessary libraries
-# from fastapi import FastAPI
-# from pydantic import BaseModel
-# from sentence_transformers import SentenceTransformer
-#
-# # Create a FastAPI app
-# app = FastAPI()
-#
-# # Load a pre-trained Sentence Transformers model
-# model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-#
-#
-# # Create a Pydantic model for input data
-# class InputData(BaseModel):
-#     text: str
-#
-#
-# # Create an endpoint to process the input string
-# @app.post("/transform")
-# async def transform_text(data: InputData):
-#     input_text = data.text
-#     # Transform the input text using the Sentence Transformers model
-#     embeddings = model.encode([input_text])
-#
-#     # Return the transformed embeddings
-#     return {"embeddings": embeddings[0].tolist()}
-#
-#
-# def run():
-#     # NOTE(gRPC Python Team): .close() is possible on a channel and should be
-#     # used in circumstances in which the with statement does not fit the needs
-#     # of the code.
-#     with grpc.insecure_channel("localhost:50051") as channel:
-#         stub = route_guide_pb2_grpc.RouteGuideStub(channel)
-#         print("-------------- GetFeature --------------")
-#         guide_get_feature(stub)
-#         print("-------------- ListFeatures --------------")
-#         guide_list_features(stub)
-#         print("-------------- RecordRoute --------------")
-#         guide_record_route(stub)
-#         print("-------------- RouteChat --------------")
-#         guide_route_chat(stub)
-#
-# # Run the FastAPI app
-# if __name__ == "__main__":
-#     import uvicorn
-#
-#     uvicorn.run(app, host="0.0.0.0", port=8000)
-
 import grpc
-from pb import vectors_pb2  # Import the generated Python code
-from pb import vectors_pb2_grpc  # Import the generated gRPC code
+import vectors_pb2  # Import the generated Python code
+import vectors_pb2_grpc  # Import the generated gRPC code
 
 def run_grpc_client():
     channel = grpc.insecure_channel('localhost:50051')  # Connect to the gRPC server
     stub = vectors_pb2_grpc.VectorManagerStub(channel)
 
+    # Define the dimension of the vector
+    dimension = 256
+
+    # Generate a random 256-dimensional vector
+    random_vector = [random.uniform(0, 1) for _ in range(dimension)]
+
     # Create a request message
-    request = vectors_pb2.AddVectorRequest(data='your_data')
+    request = vectors_pb2.AddVectorRequest(vectorReq=[1.0,2.3,4.2])
     # Call the remote gRPC method
-    response = stub.MyMethod(request)
+    response = stub.AddVector(request)
     print("Received: " + response.result)
 
 if __name__ == '__main__':
