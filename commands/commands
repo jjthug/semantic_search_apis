@@ -2,3 +2,11 @@ migrate create -ext sql -dir db/migration -seq init_schema
 
 pull postger docker
 sudo docker run --name postgres16 -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:16
+
+
+sudo docker exec -it postgres16 psql -U root
+
+\q to quit
+
+
+docker logs <name>
