@@ -7,73 +7,60 @@ package db
 
 import (
 	"context"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (name, phone, email, password_hash, private_contact, about_description) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, name, password_hash, phone, email, private_contact, about_description
+INSERT INTO users (username,hashed_password,created_at) VALUES ($1,$2,$3) RETURNING user_id, username, hashed_password, created_at
 `
 
 type CreateUserParams struct {
-	Name             string `json:"name"`
-	Phone            string `json:"phone"`
-	Email            string `json:"email"`
-	PasswordHash     string `json:"password_hash"`
-	PrivateContact   bool   `json:"private_contact"`
-	AboutDescription string `json:"about_description"`
+	Username       string    `json:"username"`
+	HashedPassword string    `json:"hashed_password"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser,
-		arg.Name,
-		arg.Phone,
-		arg.Email,
-		arg.PasswordHash,
-		arg.PrivateContact,
-		arg.AboutDescription,
-	)
+	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.HashedPassword, arg.CreatedAt)
 	var i User
 	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.PasswordHash,
-		&i.Phone,
-		&i.Email,
-		&i.PrivateContact,
-		&i.AboutDescription,
+		&i.UserID,
+		&i.Username,
+		&i.HashedPassword,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const deleteUser = `-- name: DeleteUser :exec
-DELETE FROM users WHERE id=$1
+DELETE FROM users WHERE user_id=$1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteUser, id)
+func (q *Queries) DeleteUser(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, deleteUser, userID)
 	return err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, password_hash, phone, email, private_contact, about_description FROM users WHERE id=$1
+SELECT user_id, username, hashed_password, created_at FROM users WHERE user_id=$1
 `
 
-func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
-	row := q.db.QueryRow(ctx, getUser, id)
+func (q *Queries) GetUser(ctx context.Context, userID int64) (User, error) {
+	row := q.db.QueryRow(ctx, getUser, userID)
 	var i User
 	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.PasswordHash,
-		&i.Phone,
-		&i.Email,
-		&i.PrivateContact,
-		&i.AboutDescription,
+		&i.UserID,
+		&i.Username,
+		&i.HashedPassword,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, password_hash, phone, email, private_contact, about_description FROM users
+SELECT user_id, username, hashed_password, created_at FROM users
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -94,13 +81,10 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	for rows.Next() {
 		var i User
 		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.PasswordHash,
-			&i.Phone,
-			&i.Email,
-			&i.PrivateContact,
-			&i.AboutDescription,
+			&i.UserID,
+			&i.Username,
+			&i.HashedPassword,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -113,28 +97,20 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 }
 
 const updateUserDescription = `-- name: UpdateUserDescription :one
-UPDATE users
-SET about_description = $1
-WHERE id = $2
-RETURNING id, name, password_hash, phone, email, private_contact, about_description
+UPDATE docs
+SET doc = $2
+WHERE user_id = $1
+RETURNING user_id, doc
 `
 
 type UpdateUserDescriptionParams struct {
-	AboutDescription string `json:"about_description"`
-	ID               int64  `json:"id"`
+	UserID int64       `json:"user_id"`
+	Doc    pgtype.Text `json:"doc"`
 }
 
-func (q *Queries) UpdateUserDescription(ctx context.Context, arg UpdateUserDescriptionParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUserDescription, arg.AboutDescription, arg.ID)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.PasswordHash,
-		&i.Phone,
-		&i.Email,
-		&i.PrivateContact,
-		&i.AboutDescription,
-	)
+func (q *Queries) UpdateUserDescription(ctx context.Context, arg UpdateUserDescriptionParams) (Doc, error) {
+	row := q.db.QueryRow(ctx, updateUserDescription, arg.UserID, arg.Doc)
+	var i Doc
+	err := row.Scan(&i.UserID, &i.Doc)
 	return i, err
 }

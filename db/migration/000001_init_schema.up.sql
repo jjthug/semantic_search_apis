@@ -1,9 +1,13 @@
 CREATE TABLE "users" (
-                         "id" bigserial PRIMARY KEY,
-                         "name" varchar NOT NULL,
-                         "password_hash" varchar NOT NULL,
-                         "phone" varchar NOT NULL,
-                         "email" varchar NOT NULL,
-                         "private_contact" boolean NOT NULL,
-                         "about_description" text NOT NULL
+                         "user_id" bigserial PRIMARY KEY,
+                         "username" varchar UNIQUE NOT NULL,
+                         "hashed_password" varchar NOT NULL,
+                         "created_at" timestamptz NOT NULL DEFAULT (now())
 );
+
+CREATE TABLE "docs" (
+                        "user_id" bigserial UNIQUE PRIMARY KEY NOT NULL,
+                        "doc" varchar
+);
+
+ALTER TABLE "docs" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id");

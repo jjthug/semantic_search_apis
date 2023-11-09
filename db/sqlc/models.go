@@ -4,14 +4,20 @@
 
 package db
 
-import ()
+import (
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+type Doc struct {
+	UserID int64       `json:"user_id"`
+	Doc    pgtype.Text `json:"doc"`
+}
 
 type User struct {
-	ID               int64  `json:"id"`
-	Name             string `json:"name"`
-	PasswordHash     string `json:"password_hash"`
-	Phone            string `json:"phone"`
-	Email            string `json:"email"`
-	PrivateContact   bool   `json:"private_contact"`
-	AboutDescription string `json:"about_description"`
+	UserID         int64     `json:"user_id"`
+	Username       string    `json:"username"`
+	HashedPassword string    `json:"hashed_password"`
+	CreatedAt      time.Time `json:"created_at"`
 }
