@@ -10,7 +10,11 @@ import (
 )
 
 const createDoc = `-- name: CreateDoc :one
-INSERT INTO docs (user_id,doc) VALUES ($1,$2) RETURNING user_id, doc
+INSERT INTO docs (user_id, doc)
+VALUES ($1, $2)
+ON CONFLICT (user_id) DO UPDATE
+SET doc = EXCLUDED.doc
+RETURNING user_id, doc
 `
 
 type CreateDocParams struct {

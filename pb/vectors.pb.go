@@ -20,16 +20,16 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type AddVectorRequest struct {
+type GetVectorRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	VectorReq []float32 `protobuf:"fixed32,1,rep,packed,name=vectorReq,proto3" json:"vectorReq,omitempty"`
+	Doc string `protobuf:"bytes,1,opt,name=doc,proto3" json:"doc,omitempty"`
 }
 
-func (x *AddVectorRequest) Reset() {
-	*x = AddVectorRequest{}
+func (x *GetVectorRequest) Reset() {
+	*x = GetVectorRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_vectors_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -37,13 +37,13 @@ func (x *AddVectorRequest) Reset() {
 	}
 }
 
-func (x *AddVectorRequest) String() string {
+func (x *GetVectorRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AddVectorRequest) ProtoMessage() {}
+func (*GetVectorRequest) ProtoMessage() {}
 
-func (x *AddVectorRequest) ProtoReflect() protoreflect.Message {
+func (x *GetVectorRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_vectors_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -55,28 +55,28 @@ func (x *AddVectorRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AddVectorRequest.ProtoReflect.Descriptor instead.
-func (*AddVectorRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetVectorRequest.ProtoReflect.Descriptor instead.
+func (*GetVectorRequest) Descriptor() ([]byte, []int) {
 	return file_vectors_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *AddVectorRequest) GetVectorReq() []float32 {
+func (x *GetVectorRequest) GetDoc() string {
 	if x != nil {
-		return x.VectorReq
+		return x.Doc
 	}
-	return nil
+	return ""
 }
 
-type AddVectorResponse struct {
+type GetVectorResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Resp bool `protobuf:"varint,1,opt,name=resp,proto3" json:"resp,omitempty"`
+	DocVector []float32 `protobuf:"fixed32,1,rep,packed,name=docVector,proto3" json:"docVector,omitempty"`
 }
 
-func (x *AddVectorResponse) Reset() {
-	*x = AddVectorResponse{}
+func (x *GetVectorResponse) Reset() {
+	*x = GetVectorResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_vectors_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -84,13 +84,13 @@ func (x *AddVectorResponse) Reset() {
 	}
 }
 
-func (x *AddVectorResponse) String() string {
+func (x *GetVectorResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AddVectorResponse) ProtoMessage() {}
+func (*GetVectorResponse) ProtoMessage() {}
 
-func (x *AddVectorResponse) ProtoReflect() protoreflect.Message {
+func (x *GetVectorResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_vectors_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -102,108 +102,14 @@ func (x *AddVectorResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AddVectorResponse.ProtoReflect.Descriptor instead.
-func (*AddVectorResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetVectorResponse.ProtoReflect.Descriptor instead.
+func (*GetVectorResponse) Descriptor() ([]byte, []int) {
 	return file_vectors_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *AddVectorResponse) GetResp() bool {
+func (x *GetVectorResponse) GetDocVector() []float32 {
 	if x != nil {
-		return x.Resp
-	}
-	return false
-}
-
-type SearchVectorRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	VectorReq []float32 `protobuf:"fixed32,1,rep,packed,name=vectorReq,proto3" json:"vectorReq,omitempty"`
-}
-
-func (x *SearchVectorRequest) Reset() {
-	*x = SearchVectorRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_vectors_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *SearchVectorRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SearchVectorRequest) ProtoMessage() {}
-
-func (x *SearchVectorRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_vectors_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SearchVectorRequest.ProtoReflect.Descriptor instead.
-func (*SearchVectorRequest) Descriptor() ([]byte, []int) {
-	return file_vectors_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *SearchVectorRequest) GetVectorReq() []float32 {
-	if x != nil {
-		return x.VectorReq
-	}
-	return nil
-}
-
-type SearchVectorResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	VectorResp []float32 `protobuf:"fixed32,1,rep,packed,name=vectorResp,proto3" json:"vectorResp,omitempty"`
-}
-
-func (x *SearchVectorResponse) Reset() {
-	*x = SearchVectorResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_vectors_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *SearchVectorResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SearchVectorResponse) ProtoMessage() {}
-
-func (x *SearchVectorResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_vectors_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SearchVectorResponse.ProtoReflect.Descriptor instead.
-func (*SearchVectorResponse) Descriptor() ([]byte, []int) {
-	return file_vectors_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *SearchVectorResponse) GetVectorResp() []float32 {
-	if x != nil {
-		return x.VectorResp
+		return x.DocVector
 	}
 	return nil
 }
@@ -212,31 +118,19 @@ var File_vectors_proto protoreflect.FileDescriptor
 
 var file_vectors_proto_rawDesc = []byte{
 	0x0a, 0x0d, 0x76, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
-	0x04, 0x61, 0x75, 0x74, 0x68, 0x22, 0x30, 0x0a, 0x10, 0x41, 0x64, 0x64, 0x56, 0x65, 0x63, 0x74,
-	0x6f, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1c, 0x0a, 0x09, 0x76, 0x65, 0x63,
-	0x74, 0x6f, 0x72, 0x52, 0x65, 0x71, 0x18, 0x01, 0x20, 0x03, 0x28, 0x02, 0x52, 0x09, 0x76, 0x65,
-	0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x71, 0x22, 0x27, 0x0a, 0x11, 0x41, 0x64, 0x64, 0x56, 0x65,
-	0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04,
-	0x72, 0x65, 0x73, 0x70, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x04, 0x72, 0x65, 0x73, 0x70,
-	0x22, 0x33, 0x0a, 0x13, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1c, 0x0a, 0x09, 0x76, 0x65, 0x63, 0x74, 0x6f,
-	0x72, 0x52, 0x65, 0x71, 0x18, 0x01, 0x20, 0x03, 0x28, 0x02, 0x52, 0x09, 0x76, 0x65, 0x63, 0x74,
-	0x6f, 0x72, 0x52, 0x65, 0x71, 0x22, 0x36, 0x0a, 0x14, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x56,
-	0x65, 0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1e, 0x0a,
-	0x0a, 0x76, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x18, 0x01, 0x20, 0x03, 0x28,
-	0x02, 0x52, 0x0a, 0x76, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x32, 0x94, 0x01,
+	0x04, 0x61, 0x75, 0x74, 0x68, 0x22, 0x24, 0x0a, 0x10, 0x47, 0x65, 0x74, 0x56, 0x65, 0x63, 0x74,
+	0x6f, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x0a, 0x03, 0x64, 0x6f, 0x63,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x64, 0x6f, 0x63, 0x22, 0x31, 0x0a, 0x11, 0x47,
+	0x65, 0x74, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x1c, 0x0a, 0x09, 0x64, 0x6f, 0x63, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x18, 0x01, 0x20,
+	0x03, 0x28, 0x02, 0x52, 0x09, 0x64, 0x6f, 0x63, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x32, 0x4d,
 	0x0a, 0x0d, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x12,
-	0x3c, 0x0a, 0x09, 0x41, 0x64, 0x64, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x12, 0x16, 0x2e, 0x61,
-	0x75, 0x74, 0x68, 0x2e, 0x41, 0x64, 0x64, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x1a, 0x17, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x41, 0x64, 0x64, 0x56,
-	0x65, 0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x45, 0x0a,
-	0x0c, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x12, 0x19, 0x2e,
-	0x61, 0x75, 0x74, 0x68, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x56, 0x65, 0x63, 0x74, 0x6f,
-	0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1a, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e,
-	0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x42, 0x14, 0x5a, 0x12, 0x61, 0x70, 0x69, 0x5f, 0x77, 0x69, 0x74, 0x68,
-	0x5f, 0x6d, 0x69, 0x6c, 0x76, 0x75, 0x73, 0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x3c, 0x0a, 0x09, 0x47, 0x65, 0x74, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x12, 0x16, 0x2e, 0x61,
+	0x75, 0x74, 0x68, 0x2e, 0x47, 0x65, 0x74, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x17, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x47, 0x65, 0x74, 0x56,
+	0x65, 0x63, 0x74, 0x6f, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x14, 0x5a,
+	0x12, 0x61, 0x70, 0x69, 0x5f, 0x77, 0x69, 0x74, 0x68, 0x5f, 0x6d, 0x69, 0x6c, 0x76, 0x75, 0x73,
+	0x2f, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -251,20 +145,16 @@ func file_vectors_proto_rawDescGZIP() []byte {
 	return file_vectors_proto_rawDescData
 }
 
-var file_vectors_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_vectors_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_vectors_proto_goTypes = []interface{}{
-	(*AddVectorRequest)(nil),     // 0: auth.AddVectorRequest
-	(*AddVectorResponse)(nil),    // 1: auth.AddVectorResponse
-	(*SearchVectorRequest)(nil),  // 2: auth.SearchVectorRequest
-	(*SearchVectorResponse)(nil), // 3: auth.SearchVectorResponse
+	(*GetVectorRequest)(nil),  // 0: auth.GetVectorRequest
+	(*GetVectorResponse)(nil), // 1: auth.GetVectorResponse
 }
 var file_vectors_proto_depIdxs = []int32{
-	0, // 0: auth.VectorManager.AddVector:input_type -> auth.AddVectorRequest
-	2, // 1: auth.VectorManager.SearchVector:input_type -> auth.SearchVectorRequest
-	1, // 2: auth.VectorManager.AddVector:output_type -> auth.AddVectorResponse
-	3, // 3: auth.VectorManager.SearchVector:output_type -> auth.SearchVectorResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	0, // 0: auth.VectorManager.GetVector:input_type -> auth.GetVectorRequest
+	1, // 1: auth.VectorManager.GetVector:output_type -> auth.GetVectorResponse
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -277,7 +167,7 @@ func file_vectors_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_vectors_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AddVectorRequest); i {
+			switch v := v.(*GetVectorRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -289,31 +179,7 @@ func file_vectors_proto_init() {
 			}
 		}
 		file_vectors_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AddVectorResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_vectors_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SearchVectorRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_vectors_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SearchVectorResponse); i {
+			switch v := v.(*GetVectorResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -331,7 +197,7 @@ func file_vectors_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_vectors_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

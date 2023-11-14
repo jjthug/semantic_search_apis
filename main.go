@@ -4,13 +4,9 @@ import (
 	"context"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	"log"
-	"net"
 	"semantic_api/api"
 	db "semantic_api/db/sqlc"
-	"semantic_api/pb"
 	"semantic_api/util"
 )
 
@@ -38,38 +34,22 @@ func main() {
 	// Milvus connection
 
 	// Initialize Milvus client
-	client, err := client.NewClient(context.Background(), client.Config{
-		Address: "localhost:19530",
-	})
+	milvusClient, err := initMilvusClient()
 	if err != nil {
-		// handle error
+		log.Fatal("cannot create client", err)
 	}
-	defer client.Close()
-	runGrpcServer(&client)
 
+	defer func(milvusClient client.Client) {
+		err := milvusClient.Close()
+		if err != nil {
+			log.Fatal("error closing client", err)
+		}
+	}(milvusClient)
 }
 
-func runGrpcServer(client *client.Client) {
-
-	server, err := gapi.NewServer(client)
-	if err != nil {
-		log.Fatal("cannot create server:", err)
-	}
-
-	grpcServer := grpc.NewServer()
-	//server,err :=
-	pb.RegisterVectorManagerServer(grpcServer, server)
-	reflection.Register(grpcServer)
-
-	listener, err := net.Listen("tcp", "0.0.0.0:50051")
-	if err != nil {
-		log.Fatal("cannot create listener:", err)
-	}
-
-	log.Printf("start gRpc server at %s", listener.Addr().String())
-	err = grpcServer.Serve(listener)
-	if err != nil {
-		log.Fatal("cannot start gRpc server:", err)
-	}
-
+func initMilvusClient() (client.Client, error) {
+	milvusClient, err := client.NewClient(context.Background(), client.Config{
+		Address: "localhost:19530",
+	})
+	return milvusClient, err
 }

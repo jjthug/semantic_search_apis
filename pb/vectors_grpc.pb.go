@@ -19,16 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	VectorManager_AddVector_FullMethodName    = "/auth.VectorManager/AddVector"
-	VectorManager_SearchVector_FullMethodName = "/auth.VectorManager/SearchVector"
+	VectorManager_GetVector_FullMethodName = "/auth.VectorManager/GetVector"
 )
 
 // VectorManagerClient is the client API for VectorManager service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type VectorManagerClient interface {
-	AddVector(ctx context.Context, in *AddVectorRequest, opts ...grpc.CallOption) (*AddVectorResponse, error)
-	SearchVector(ctx context.Context, in *SearchVectorRequest, opts ...grpc.CallOption) (*SearchVectorResponse, error)
+	GetVector(ctx context.Context, in *GetVectorRequest, opts ...grpc.CallOption) (*GetVectorResponse, error)
 }
 
 type vectorManagerClient struct {
@@ -39,18 +37,9 @@ func NewVectorManagerClient(cc grpc.ClientConnInterface) VectorManagerClient {
 	return &vectorManagerClient{cc}
 }
 
-func (c *vectorManagerClient) AddVector(ctx context.Context, in *AddVectorRequest, opts ...grpc.CallOption) (*AddVectorResponse, error) {
-	out := new(AddVectorResponse)
-	err := c.cc.Invoke(ctx, VectorManager_AddVector_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *vectorManagerClient) SearchVector(ctx context.Context, in *SearchVectorRequest, opts ...grpc.CallOption) (*SearchVectorResponse, error) {
-	out := new(SearchVectorResponse)
-	err := c.cc.Invoke(ctx, VectorManager_SearchVector_FullMethodName, in, out, opts...)
+func (c *vectorManagerClient) GetVector(ctx context.Context, in *GetVectorRequest, opts ...grpc.CallOption) (*GetVectorResponse, error) {
+	out := new(GetVectorResponse)
+	err := c.cc.Invoke(ctx, VectorManager_GetVector_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +50,7 @@ func (c *vectorManagerClient) SearchVector(ctx context.Context, in *SearchVector
 // All implementations must embed UnimplementedVectorManagerServer
 // for forward compatibility
 type VectorManagerServer interface {
-	AddVector(context.Context, *AddVectorRequest) (*AddVectorResponse, error)
-	SearchVector(context.Context, *SearchVectorRequest) (*SearchVectorResponse, error)
+	GetVector(context.Context, *GetVectorRequest) (*GetVectorResponse, error)
 	mustEmbedUnimplementedVectorManagerServer()
 }
 
@@ -70,11 +58,8 @@ type VectorManagerServer interface {
 type UnimplementedVectorManagerServer struct {
 }
 
-func (UnimplementedVectorManagerServer) AddVector(context.Context, *AddVectorRequest) (*AddVectorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddVector not implemented")
-}
-func (UnimplementedVectorManagerServer) SearchVector(context.Context, *SearchVectorRequest) (*SearchVectorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SearchVector not implemented")
+func (UnimplementedVectorManagerServer) GetVector(context.Context, *GetVectorRequest) (*GetVectorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetVector not implemented")
 }
 func (UnimplementedVectorManagerServer) mustEmbedUnimplementedVectorManagerServer() {}
 
@@ -89,38 +74,20 @@ func RegisterVectorManagerServer(s grpc.ServiceRegistrar, srv VectorManagerServe
 	s.RegisterService(&VectorManager_ServiceDesc, srv)
 }
 
-func _VectorManager_AddVector_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddVectorRequest)
+func _VectorManager_GetVector_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetVectorRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(VectorManagerServer).AddVector(ctx, in)
+		return srv.(VectorManagerServer).GetVector(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: VectorManager_AddVector_FullMethodName,
+		FullMethod: VectorManager_GetVector_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VectorManagerServer).AddVector(ctx, req.(*AddVectorRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _VectorManager_SearchVector_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SearchVectorRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(VectorManagerServer).SearchVector(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: VectorManager_SearchVector_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(VectorManagerServer).SearchVector(ctx, req.(*SearchVectorRequest))
+		return srv.(VectorManagerServer).GetVector(ctx, req.(*GetVectorRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -133,12 +100,8 @@ var VectorManager_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*VectorManagerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AddVector",
-			Handler:    _VectorManager_AddVector_Handler,
-		},
-		{
-			MethodName: "SearchVector",
-			Handler:    _VectorManager_SearchVector_Handler,
+			MethodName: "GetVector",
+			Handler:    _VectorManager_GetVector_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
