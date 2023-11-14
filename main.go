@@ -9,12 +9,6 @@ import (
 	"semantic_api/util"
 )
 
-const (
-	dbDriver = "postgres"
-	dbSource = "postgresql://root:secret@localhost:5432/users_semantic?sslmode=disable"
-	address  = "0.0.0.0:8080"
-)
-
 func main() {
 
 	config, err := util.LoadConfig(".")

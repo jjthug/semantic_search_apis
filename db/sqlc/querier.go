@@ -9,8 +9,10 @@ import (
 )
 
 type Querier interface {
+	CreateDoc(ctx context.Context, arg CreateDocParams) (Doc, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteUser(ctx context.Context, userID int64) error
+	GetDoc(ctx context.Context, userID int64) (Doc, error)
 	GetUser(ctx context.Context, userID int64) (User, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	UpdateUserDescription(ctx context.Context, arg UpdateUserDescriptionParams) (Doc, error)

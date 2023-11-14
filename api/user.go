@@ -4,15 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	db "semantic_api/db/sqlc"
+	"time"
 )
 
 type createUserRequest struct {
-	Name             string `json:"name" binding:"required"`
-	Phone            string `json:"phone" binding:"required"`
-	Email            string `json:"email" binding:"required"`
-	PasswordHash     string `json:"password_hash" binding:"required"`
-	PrivateContact   bool   `json:"private_contact" binding:"required"`
-	AboutDescription string `json:"about_description" binding:"required"`
+	Username     string `json:"username" binding:"required"`
+	PasswordHash string `json:"passwordHash" binding:"required"`
 }
 
 func (server *Server) CreateNewUser(ctx *gin.Context) {
@@ -23,12 +20,9 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 	}
 
 	arg := db.CreateUserParams{
-		Name:             req.Name,
-		Phone:            req.Phone,
-		Email:            req.Email,
-		PasswordHash:     req.PasswordHash,
-		PrivateContact:   req.PrivateContact,
-		AboutDescription: req.AboutDescription,
+		Username:       req.Username,
+		HashedPassword: req.PasswordHash,
+		CreatedAt:      time.Now().UTC(),
 	}
 
 	user, err := server.store.CreateUser(ctx, arg)

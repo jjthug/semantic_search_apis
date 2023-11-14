@@ -16,7 +16,10 @@ func NewServer(store db.Store) *Server {
 	}
 
 	router := gin.Default()
-	router.POST("/users", server.CreateNewUser)
+	router.POST("/create_user", server.CreateNewUser)
+	router.GET("/get_user/:id", server.GetUser)
+	router.POST("/create_doc", server.CreateDoc)
+	router.GET("/get_doc/:id", server.GetDoc)
 
 	server.router = router
 	return server

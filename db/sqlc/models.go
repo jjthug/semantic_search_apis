@@ -6,13 +6,11 @@ package db
 
 import (
 	"time"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Doc struct {
-	UserID int64       `json:"user_id"`
-	Doc    pgtype.Text `json:"doc"`
+	UserID int64  `json:"user_id"`
+	Doc    string `json:"doc"`
 }
 
 type User struct {

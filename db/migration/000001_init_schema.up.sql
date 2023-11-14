@@ -7,7 +7,7 @@ CREATE TABLE "users" (
 
 CREATE TABLE "docs" (
                         "user_id" bigserial UNIQUE PRIMARY KEY NOT NULL,
-                        "doc" varchar
+                        "doc" varchar NOT NULL
 );
 
 ALTER TABLE "docs" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id");
