@@ -2,23 +2,14 @@ syntax = "proto3";
 package auth;
 option go_package = "api_with_milvus/pb";
 
-message AddVectorRequest {
-  repeated float vectorReq = 1;
+message GetVectorRequest {
+  string doc = 1;
 }
 
-message AddVectorResponse {
-  bool resp = 1;
-}
-
-message SearchVectorRequest {
-  repeated float vectorReq = 1;
-}
-
-message SearchVectorResponse {
-  repeated float vectorResp = 1;
+message GetVectorResponse {
+  repeated float docVector = 1;
 }
 
 service VectorManager {
-  rpc AddVector (AddVectorRequest) returns (AddVectorResponse);
-  rpc SearchVector (SearchVectorRequest) returns (SearchVectorResponse);
+  rpc GetVector (GetVectorRequest) returns (GetVectorResponse);
 }

@@ -2,7 +2,8 @@ import grpc
 import vectors_pb2  # Import the generated Python code
 import vectors_pb2_grpc  # Import the generated gRPC code
 import random
-
+# Import necessary libraries
+from fastapi import FastAPI
 def generate_random_vector(dimension):
     return [random.uniform(0, 1) for _ in range(dimension)]
 

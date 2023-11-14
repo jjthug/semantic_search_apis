@@ -13,7 +13,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rvectors.proto\x12\x04\x61uth\"%\n\x10\x41\x64\x64VectorRequest\x12\x11\n\tvectorReq\x18\x01 \x03(\x02\"!\n\x11\x41\x64\x64VectorResponse\x12\x0c\n\x04resp\x18\x01 \x01(\x08\"(\n\x13SearchVectorRequest\x12\x11\n\tvectorReq\x18\x01 \x03(\x02\"*\n\x14SearchVectorResponse\x12\x12\n\nvectorResp\x18\x01 \x03(\x02\x32\x94\x01\n\rVectorManager\x12<\n\tAddVector\x12\x16.auth.AddVectorRequest\x1a\x17.auth.AddVectorResponse\x12\x45\n\x0cSearchVector\x12\x19.auth.SearchVectorRequest\x1a\x1a.auth.SearchVectorResponseB\x14Z\x12\x61pi_with_milvus/pbb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rvectors.proto\x12\x04\x61uth\"\x1f\n\x10GetVectorRequest\x12\x0b\n\x03\x64oc\x18\x01 \x01(\t\"&\n\x11GetVectorResponse\x12\x11\n\tdocVector\x18\x01 \x03(\x02\x32M\n\rVectorManager\x12<\n\tGetVector\x12\x16.auth.GetVectorRequest\x1a\x17.auth.GetVectorResponseB\x14Z\x12\x61pi_with_milvus/pbb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -21,14 +21,10 @@ _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'vectors_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'Z\022api_with_milvus/pb'
-  _globals['_ADDVECTORREQUEST']._serialized_start=23
-  _globals['_ADDVECTORREQUEST']._serialized_end=60
-  _globals['_ADDVECTORRESPONSE']._serialized_start=62
-  _globals['_ADDVECTORRESPONSE']._serialized_end=95
-  _globals['_SEARCHVECTORREQUEST']._serialized_start=97
-  _globals['_SEARCHVECTORREQUEST']._serialized_end=137
-  _globals['_SEARCHVECTORRESPONSE']._serialized_start=139
-  _globals['_SEARCHVECTORRESPONSE']._serialized_end=181
-  _globals['_VECTORMANAGER']._serialized_start=184
-  _globals['_VECTORMANAGER']._serialized_end=332
+  _globals['_GETVECTORREQUEST']._serialized_start=23
+  _globals['_GETVECTORREQUEST']._serialized_end=54
+  _globals['_GETVECTORRESPONSE']._serialized_start=56
+  _globals['_GETVECTORRESPONSE']._serialized_end=94
+  _globals['_VECTORMANAGER']._serialized_start=96
+  _globals['_VECTORMANAGER']._serialized_end=173
 # @@protoc_insertion_point(module_scope)
