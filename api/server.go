@@ -3,16 +3,19 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	db "semantic_api/db/sqlc"
+	"semantic_api/pb"
 )
 
 type Server struct {
-	store  db.Store
-	router *gin.Engine
+	store      db.Store
+	router     *gin.Engine
+	grpcClient *pb.VectorManagerClient
 }
 
-func NewServer(store db.Store) *Server {
+func NewServer(store db.Store, client *pb.VectorManagerClient) *Server {
 	server := &Server{
-		store: store,
+		store:      store,
+		grpcClient: client,
 	}
 
 	router := gin.Default()
