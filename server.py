@@ -2,17 +2,13 @@ from concurrent import futures
 import grpc
 # from vectors_pb2 import GetVectorRequest, GetVectorResponse
 import vectors_pb2
+from model import encodeToVector
 from vectors_pb2_grpc import VectorManagerServicer, add_VectorManagerServicer_to_server
 import numpy as np
 
 class VectorManagerServer(VectorManagerServicer):
     def GetVector(self, request, context):
-        # Replace this with your logic to fetch vector data based on the vector_id
-        array_size = 10
-
-        # Generate a random float32 array
-        vector_data = np.random.rand(array_size).astype(np.float32)
-        # vector_data = f"Vector data for ID: {request.vector_id}"
+        vector_data = encodeToVector(request.doc)
         return vectors_pb2.GetVectorResponse(docVector=vector_data)
 
 def serve():
