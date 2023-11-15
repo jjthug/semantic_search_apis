@@ -15,8 +15,15 @@ migratedown:
 
 sqlc:
 	sqlc generate
+
 server:
 	go run main.go
+
+local:
+	sudo docker start c4a7459f5434 fb8211168695 64cec05ba392 6a2da40e8575
+
+milvus_up:
+	sudo docker-compose up -d
 
 proto:
 	rm -f pb/*.go

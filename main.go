@@ -41,12 +41,6 @@ func main() {
 	grpcClient := pb.NewVectorManagerClient(conn)
 
 	store := db.NewStore(connPool)
-	server := api.NewServer(store, &grpcClient)
-	err = server.RunHTTPServer(config.ServerAddress)
-
-	if err != nil {
-		log.Fatal("cannot start server", err)
-	}
 
 	// Milvus connection
 
@@ -62,11 +56,20 @@ func main() {
 			log.Fatal("error closing client", err)
 		}
 	}(milvusClient)
+
+	server := api.NewServer(store, &grpcClient, &milvusClient)
+	err = server.RunHTTPServer(config.ServerAddress)
+
+	if err != nil {
+		log.Fatal("cannot start server", err)
+	}
+
 }
 
 func initMilvusClient() (client.Client, error) {
-	milvusClient, err := client.NewClient(context.Background(), client.Config{
-		Address: "localhost:19530",
-	})
+	milvusClient, err := client.NewGrpcClient(
+		context.Background(),
+		"localhost:19530",
+	)
 	return milvusClient, err
 }

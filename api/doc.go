@@ -16,6 +16,8 @@ type createDocRequest struct {
 	Doc    string `json:"doc" binding:"required"`
 }
 
+const collectionName = "people_docs"
+
 func (server *Server) CreateDoc(ctx *gin.Context) {
 	var req *createDocRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -38,8 +40,17 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 
 	docVector := getDocAsVector(req.Doc, server.grpcClient)
 
+	has, err := (*server.milvusClient).HasCollection(context.Background(), collectionName)
+
+	if !has {
+		err := vector_db.CreateColl(server.milvusClient, collectionName)
+		if err != nil {
+			log.Fatal("failed to create collection", err.Error())
+		}
+	}
+
 	// add to milvusdb
-	vector_db.AddToDb(docVector)
+	vector_db.AddToDb(server.milvusClient, req.UserId, docVector, collectionName)
 
 	ctx.JSON(http.StatusOK, user)
 }

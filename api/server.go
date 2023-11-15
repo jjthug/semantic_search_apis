@@ -2,20 +2,23 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	db "semantic_api/db/sqlc"
 	"semantic_api/pb"
 )
 
 type Server struct {
-	store      db.Store
-	router     *gin.Engine
-	grpcClient *pb.VectorManagerClient
+	store        db.Store
+	router       *gin.Engine
+	grpcClient   *pb.VectorManagerClient
+	milvusClient *client.Client
 }
 
-func NewServer(store db.Store, client *pb.VectorManagerClient) *Server {
+func NewServer(store db.Store, client *pb.VectorManagerClient, milvusClient *client.Client) *Server {
 	server := &Server{
-		store:      store,
-		grpcClient: client,
+		store:        store,
+		grpcClient:   client,
+		milvusClient: milvusClient,
 	}
 
 	router := gin.Default()
