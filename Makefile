@@ -25,10 +25,16 @@ local:
 milvus_up:
 	sudo docker-compose up -d
 
+find_5432:
+	sudo lsof -i :5432
+
+kill_pid:
+	sudo kill -9 <pid>
+
 proto:
 	rm -f pb/*.go
 	protoc --proto_path=protobuf --go_out=pb --go_opt=paths=source_relative \
     --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
     protobuf/*.proto
 
-.PHONY: postgres createdb dropdb migrateup sqlc migratedown server proto
+.PHONY: postgres createdb dropdb migrateup sqlc migratedown server proto kill_pid find_5432 milvus_up

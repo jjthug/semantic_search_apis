@@ -8,3 +8,5 @@ RETURNING *;
 -- name: GetDoc :one
 SELECT * FROM docs WHERE user_id=$1;
 
+-- name: GetDocs :many
+SELECT * FROM docs WHERE user_id IN (@user_ids::bigserial[]);

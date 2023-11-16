@@ -18,6 +18,6 @@ DELETE FROM users WHERE user_id=$1;
 
 -- name: ListUsers :many
 SELECT * FROM users
-ORDER BY id
+ORDER BY user_id
 LIMIT $1
 OFFSET $2;

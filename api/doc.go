@@ -42,6 +42,10 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 
 	has, err := (*server.milvusClient).HasCollection(context.Background(), collectionName)
 
+	if err != nil {
+		log.Fatal("failed to get Has collection", err.Error())
+	}
+
 	if !has {
 		err := vector_db.CreateColl(server.milvusClient, collectionName)
 		if err != nil {
@@ -88,4 +92,47 @@ func (server *Server) GetDoc(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, doc)
+}
+
+type SearchSimilarDocsRequest struct {
+	QueryDoc string `json:"query_doc" binding:"required"`
+}
+
+func (server *Server) CreateIndex(ctx *gin.Context) {
+	vector_db.CreateIndex(server.milvusClient, collectionName)
+}
+
+func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
+	var req *SearchSimilarDocsRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	has, err := (*server.milvusClient).HasCollection(context.Background(), collectionName)
+	if err != nil {
+		log.Fatal("failed to get Has collection", err.Error())
+	}
+
+	if !has {
+		err := vector_db.CreateColl(server.milvusClient, collectionName)
+		if err != nil {
+			log.Fatal("failed to create collection", err.Error())
+		}
+	}
+
+	// get queryDoc as vector
+	queryVector := getDocAsVector(req.QueryDoc, server.grpcClient)
+
+	// search in milvusdb
+	similarDocsIds := vector_db.SearchInDb(server.milvusClient, collectionName, queryVector)
+
+	// get docs
+	similarDocs, err := server.store.GetDoc(ctx, similarDocsIds[0])
+
+	if err != nil {
+		log.Fatal("failed to get similar docs", err.Error())
+	}
+
+	ctx.JSON(http.StatusOK, similarDocs)
 }
