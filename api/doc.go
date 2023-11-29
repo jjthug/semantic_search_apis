@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"log"
 	"net/http"
 	db "semantic_api/db/sqlc"
@@ -16,7 +17,7 @@ type createDocRequest struct {
 	Doc    string `json:"doc" binding:"required"`
 }
 
-const collectionName = "people_docs"
+const collectionName = "people_docs5"
 
 func (server *Server) CreateDoc(ctx *gin.Context) {
 	var req *createDocRequest
@@ -98,8 +99,8 @@ type SearchSimilarDocsRequest struct {
 	QueryDoc string `json:"query_doc" binding:"required"`
 }
 
-func (server *Server) CreateIndex(ctx *gin.Context) {
-	vector_db.CreateIndex(server.milvusClient, collectionName)
+func createIndex(milvusClient *client.Client) {
+	vector_db.CreateIndex(milvusClient, collectionName)
 }
 
 func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
@@ -119,6 +120,8 @@ func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 		if err != nil {
 			log.Fatal("failed to create collection", err.Error())
 		}
+
+		createIndex(server.milvusClient)
 	}
 
 	// get queryDoc as vector

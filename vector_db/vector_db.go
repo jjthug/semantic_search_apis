@@ -13,7 +13,7 @@ func AddToDb(milvusClient *client.Client, userId int64, docVector []float32, col
 	idColumn := entity.NewColumnInt64("user_id", []int64{userId})
 	c := [][]float32{}
 	c = append(c, docVector)
-	docColumn := entity.NewColumnFloatVector("doc_vector", 384, c)
+	docColumn := entity.NewColumnFloatVector("doc_vector", 768, c)
 
 	_, err := (*milvusClient).Insert(
 		context.Background(), // ctx
@@ -43,7 +43,7 @@ func CreateColl(client *client.Client, collectionName string) error {
 				Name:     "doc_vector",
 				DataType: entity.FieldTypeFloatVector,
 				TypeParams: map[string]string{
-					"dim": "384",
+					"dim": "768",
 				},
 			},
 		},
@@ -105,16 +105,16 @@ func SearchInDb(milvusClient *client.Client, collectionName string, queryVector 
 	})
 
 	searchResult, err := (*milvusClient).Search(
-		context.Background(),                             // ctx
-		collectionName,                                   // CollectionName
-		[]string{},                                       // partitionNames
-		"",                                               // expr
-		[]string{"user_id"},                              // outputFields
+		context.Background(), // ctx
+		collectionName,       // CollectionName
+		[]string{},           // partitionNames
+		"",                   // expr
+		[]string{"user_id"},  // outputFields
 		[]entity.Vector{entity.FloatVector(queryVector)}, // vectors
-		"doc_vector",                                     // vectorField
-		entity.L2,                                        // metricType
-		10,                                               // topK
-		sp,                                               // sp
+		"doc_vector", // vectorField
+		entity.L2,    // metricType
+		10,           // topK
+		sp,           // sp
 		opt,
 	)
 

@@ -28,8 +28,6 @@ func NewServer(store db.Store, client *pb.VectorManagerClient, milvusClient *cli
 	router.GET("/get_doc/:id", server.GetDoc)
 	router.GET("/search_doc", server.SearchSimilarDocs)
 
-	router.POST("/create_index", server.CreateIndex)
-
 	server.router = router
 	return server
 }

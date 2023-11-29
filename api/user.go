@@ -1,15 +1,17 @@
 package api
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	db "semantic_api/db/sqlc"
+	"semantic_api/util"
 	"time"
 )
 
 type createUserRequest struct {
-	Username     string `json:"username" binding:"required"`
-	PasswordHash string `json:"passwordHash" binding:"required"`
+	Username string `json:"username" binding:"required,alphanum"`
+	Password string `json:"passwordHash" binding:"required,min=6"`
 }
 
 func (server *Server) CreateNewUser(ctx *gin.Context) {
@@ -19,14 +21,20 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 		return
 	}
 
+	hashedPassword, _ := util.HashPassword(req.Password)
+
 	arg := db.CreateUserParams{
 		Username:       req.Username,
-		HashedPassword: req.PasswordHash,
+		HashedPassword: hashedPassword,
 		CreatedAt:      time.Now().UTC(),
 	}
 
 	user, err := server.store.CreateUser(ctx, arg)
 	if err != nil {
+		errCode := db.ErrorCode(err)
+		if errCode == db.UniqueViolation || errCode == db.ForeignKeyViolation {
+			ctx.JSON(http.StatusForbidden, errorResponse(err))
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -47,6 +55,10 @@ func (server *Server) GetUser(ctx *gin.Context) {
 
 	user, err := server.store.GetUser(ctx, req.ID)
 	if err != nil {
+		if errors.Is(err, db.ErrRecordNotFound) {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
