@@ -9,12 +9,12 @@ import (
 	"net/http"
 	db "semantic_api/db/sqlc"
 	"semantic_api/pb"
+	"semantic_api/token"
 	"semantic_api/vector_db"
 )
 
 type createDocRequest struct {
-	UserId int64  `json:"user_id" binding:"required"`
-	Doc    string `json:"doc" binding:"required"`
+	Doc string `json:"doc" binding:"required"`
 }
 
 const collectionName = "people_docs5"
@@ -25,9 +25,11 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	userId, err := server.store.GetUserID(ctx, authPayload.Username)
 
 	arg := db.CreateDocParams{
-		UserID: req.UserId,
+		UserID: userId,
 		Doc:    req.Doc,
 	}
 
@@ -55,7 +57,7 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 	}
 
 	// add to milvusdb
-	vector_db.AddToDb(server.milvusClient, req.UserId, docVector, collectionName)
+	vector_db.AddToDb(server.milvusClient, userId, docVector, collectionName)
 
 	ctx.JSON(http.StatusOK, user)
 }

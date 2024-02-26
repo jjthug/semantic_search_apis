@@ -3,8 +3,11 @@ INSERT INTO users (username,hashed_password,created_at) VALUES ($1,$2,$3) RETURN
 
 
 -- name: GetUser :one
-SELECT * FROM users WHERE user_id=$1;
+SELECT * FROM users WHERE username=$1;
 
+
+-- name: GetUserID :one
+SELECT user_id from users WHERE username=$1;
 
 -- name: UpdateUserDescription :one
 UPDATE docs

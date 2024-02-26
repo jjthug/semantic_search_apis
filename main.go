@@ -57,7 +57,10 @@ func main() {
 		}
 	}(milvusClient)
 
-	server := api.NewServer(store, &grpcClient, &milvusClient)
+	server, err := api.NewServer(config, store, &grpcClient, &milvusClient)
+	if err != nil {
+		log.Fatal("error creating server", err)
+	}
 	err = server.RunHTTPServer(config.ServerAddress)
 
 	if err != nil {

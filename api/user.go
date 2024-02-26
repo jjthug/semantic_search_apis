@@ -6,12 +6,12 @@ import (
 	"net/http"
 	db "semantic_api/db/sqlc"
 	"semantic_api/util"
-	"time"
 )
 
 type createUserRequest struct {
 	Username string `json:"username" binding:"required,alphanum"`
-	Password string `json:"passwordHash" binding:"required,min=6"`
+	Password string `json:"password" binding:"required,min=6"`
+	Doc      string `json:"doc" binding:"required"`
 }
 
 func (server *Server) CreateNewUser(ctx *gin.Context) {
@@ -23,13 +23,13 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 
 	hashedPassword, _ := util.HashPassword(req.Password)
 
-	arg := db.CreateUserParams{
-		Username:       req.Username,
-		HashedPassword: hashedPassword,
-		CreatedAt:      time.Now().UTC(),
+	arg := db.CreateUserTxParams{
+		Username:     req.Username,
+		PasswordHash: hashedPassword,
+		Doc:          req.Doc,
 	}
 
-	user, err := server.store.CreateUser(ctx, arg)
+	user, err := server.store.CreateUserTx(ctx, arg)
 	if err != nil {
 		errCode := db.ErrorCode(err)
 		if errCode == db.UniqueViolation || errCode == db.ForeignKeyViolation {
@@ -43,7 +43,7 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 }
 
 type GetUserRequest struct {
-	ID int64 `uri:"id" binding:"required,min=1"`
+	Username string `uri:"username" binding:"required"`
 }
 
 func (server *Server) GetUser(ctx *gin.Context) {
@@ -53,7 +53,7 @@ func (server *Server) GetUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := server.store.GetUser(ctx, req.ID)
+	user, err := server.store.GetUser(ctx, req.Username)
 	if err != nil {
 		if errors.Is(err, db.ErrRecordNotFound) {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -89,4 +89,77 @@ func (server *Server) ListUsers(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, users)
+}
+
+type loginUserRequest struct {
+	Username string `json:"username" binding:"required,alphanum"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+type loginUserResponse struct {
+	AccessToken string
+	User        string
+}
+
+func (server *Server) LoginUser(ctx *gin.Context) {
+	var req loginUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := server.store.GetUser(ctx, req.Username)
+	if err != nil {
+		if errors.Is(err, db.ErrRecordNotFound) {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	err = util.CheckPassword(req.Password, user.HashedPassword)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	accessToken, err := server.tokenMaker.CreateToken(
+		user.Username,
+		server.config.AccessTokenDuration,
+	)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	//refreshToken, err := server.tokenMaker.CreateToken(
+	//	user.Username,
+	//	server.config.AccessTokenDuration,
+	//)
+	//
+	//if err != nil {
+	//	ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	//	return
+	//}
+	//
+	//session, err := server.store.CreateSession(ctx, db.CreateSessionParams{
+	//	ID:           refreshPayload.ID,
+	//	Username:     user.Username,
+	//	RefreshToken: refreshToken,
+	//	UserAgent:    ctx.Request.UserAgent(),
+	//	ClientIp:     ctx.ClientIP(),
+	//	IsBlocked:    false,
+	//	ExpiresAt:    refreshPayload.ExpiredAt,
+	//})
+	//if err != nil {
+	//	ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	//	return
+	//}
+
+	rsp := loginUserResponse{
+		AccessToken: accessToken,
+		User:        user.Username,
+	}
+	ctx.JSON(http.StatusOK, rsp)
 }
