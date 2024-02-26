@@ -39,27 +39,33 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 		return
 	}
 
+	AddToVectorDB(server.milvusClient, server.grpcClient, req.Doc, userId)
+
+	ctx.JSON(http.StatusOK, user)
+}
+
+func AddToVectorDB(milvusClient *client.Client, grpcClient *pb.VectorManagerClient, doc string, userId int64) error {
 	// get doc converted to vector from grpc server
 
-	docVector := getDocAsVector(req.Doc, server.grpcClient)
+	docVector := getDocAsVector(doc, grpcClient)
 
-	has, err := (*server.milvusClient).HasCollection(context.Background(), collectionName)
+	has, err := (*milvusClient).HasCollection(context.Background(), collectionName)
 
 	if err != nil {
 		log.Fatal("failed to get Has collection", err.Error())
 	}
 
 	if !has {
-		err := vector_db.CreateColl(server.milvusClient, collectionName)
+		err := vector_db.CreateColl(milvusClient, collectionName)
 		if err != nil {
 			log.Fatal("failed to create collection", err.Error())
 		}
 	}
 
 	// add to milvusdb
-	vector_db.AddToDb(server.milvusClient, userId, docVector, collectionName)
+	err = vector_db.AddToDb(milvusClient, userId, docVector, collectionName)
 
-	ctx.JSON(http.StatusOK, user)
+	return err
 }
 
 func getDocAsVector(doc string, grpcClient *pb.VectorManagerClient) []float32 {

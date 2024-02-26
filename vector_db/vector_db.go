@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-func AddToDb(milvusClient *client.Client, userId int64, docVector []float32, collectionName string) {
+func AddToDb(milvusClient *client.Client, userId int64, docVector []float32, collectionName string) error {
 
 	idColumn := entity.NewColumnInt64("user_id", []int64{userId})
 	c := [][]float32{}
@@ -23,8 +23,11 @@ func AddToDb(milvusClient *client.Client, userId int64, docVector []float32, col
 		docColumn,            // columnarData
 	)
 	if err != nil {
-		log.Fatal("failed to insert data:", err.Error())
+		//log.Fatal("failed to insert data:", err.Error())
+		_ = fmt.Errorf("failed to insert data: %v", err.Error())
 	}
+
+	return err
 }
 
 func CreateColl(client *client.Client, collectionName string) error {
