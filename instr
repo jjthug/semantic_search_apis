@@ -1,0 +1,3 @@
+docker rmi <imageId>
+sudo docker run --name trovi -e GIN_MODE=debug -p 8080:8080 trovi:latest
+sudo docker build -t trovi:latest .

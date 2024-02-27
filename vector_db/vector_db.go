@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
-	"log"
 )
 
 func AddToDb(milvusClient *client.Client, userId int64, docVector []float32, collectionName string) error {
@@ -24,7 +23,7 @@ func AddToDb(milvusClient *client.Client, userId int64, docVector []float32, col
 	)
 	if err != nil {
 		//log.Fatal("failed to insert data:", err.Error())
-		_ = fmt.Errorf("failed to insert data: %v", err.Error())
+		fmt.Errorf("failed to insert data: %v", err.Error())
 	}
 
 	return err
@@ -56,20 +55,21 @@ func CreateColl(client *client.Client, collectionName string) error {
 	err := (*client).CreateCollection(context.Background(), schema, 2)
 
 	if err != nil {
-		log.Fatal("failed to create collection:", err.Error())
+		fmt.Errorf("failed to create collection: %w", err.Error())
 	}
 
 	return err
 
 }
 
-func CreateIndex(milvusClient *client.Client, collectionName string) {
+func CreateIndex(milvusClient *client.Client, collectionName string) error {
 	idx, err := entity.NewIndexIvfFlat( // NewIndex func
 		entity.L2, // metricType
 		1024,      // ConstructParams
 	)
 	if err != nil {
-		log.Fatal("fail to create ivf flat index parameter:", err.Error())
+		fmt.Errorf("fail to create ivf flat index parameter: %w", err.Error())
+		return err
 	}
 
 	err = (*milvusClient).CreateIndex(
@@ -80,11 +80,12 @@ func CreateIndex(milvusClient *client.Client, collectionName string) {
 		false,                // async
 	)
 	if err != nil {
-		log.Fatal("fail to create index:", err.Error())
+		fmt.Errorf("fail to create index: %w", err.Error())
 	}
+	return err
 }
 
-func SearchInDb(milvusClient *client.Client, collectionName string, queryVector []float32) []int64 {
+func SearchInDb(milvusClient *client.Client, collectionName string, queryVector []float32) ([]int64, error) {
 	// first load collection to memory
 	err := (*milvusClient).LoadCollection(
 		context.Background(), // ctx
@@ -93,7 +94,8 @@ func SearchInDb(milvusClient *client.Client, collectionName string, queryVector 
 	)
 
 	if err != nil {
-		log.Fatal("failed to load collection:", err.Error())
+		fmt.Errorf("failed to load collection: %w", err.Error())
+		return nil, err
 	}
 
 	sp, _ := entity.NewIndexIvfFlatSearchParam( // NewIndex*SearchParam func
@@ -122,7 +124,8 @@ func SearchInDb(milvusClient *client.Client, collectionName string, queryVector 
 	)
 
 	if err != nil {
-		log.Fatal("fail to search collection:", err.Error())
+		fmt.Errorf("fail to search collection: %w", err.Error())
+		return nil, err
 	}
 
 	fmt.Printf("%#v\n", searchResult)
@@ -138,8 +141,9 @@ func SearchInDb(milvusClient *client.Client, collectionName string, queryVector 
 	)
 
 	if err != nil {
-		log.Fatal("failed to release collection:", err.Error())
+		fmt.Errorf("failed to release collection: %w", err.Error())
+		return nil, err
 	}
 
-	return []int64{val1}
+	return []int64{val1}, nil
 }

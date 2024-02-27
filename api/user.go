@@ -44,6 +44,7 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 
 	if err != nil {
 		fmt.Errorf("Failed to insert doc in vector db: %v", err)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
 	ctx.JSON(http.StatusOK, user)

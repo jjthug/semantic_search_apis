@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
-	"log"
 	"net/http"
 	db "semantic_api/db/sqlc"
 	"semantic_api/pb"
@@ -39,7 +38,10 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 		return
 	}
 
-	AddToVectorDB(server.milvusClient, server.grpcClient, req.Doc, userId)
+	err = AddToVectorDB(server.milvusClient, server.grpcClient, req.Doc, userId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
 
 	ctx.JSON(http.StatusOK, user)
 }
@@ -47,18 +49,24 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 func AddToVectorDB(milvusClient *client.Client, grpcClient *pb.VectorManagerClient, doc string, userId int64) error {
 	// get doc converted to vector from grpc server
 
-	docVector := getDocAsVector(doc, grpcClient)
+	docVector, err := getDocAsVector(doc, grpcClient)
+	if err != nil {
+		fmt.Errorf("failed to get doc as vector %w", err.Error())
+		return err
+	}
 
 	has, err := (*milvusClient).HasCollection(context.Background(), collectionName)
 
 	if err != nil {
-		log.Fatal("failed to get Has collection", err.Error())
+		fmt.Errorf("failed to get Has collection %w", err.Error())
+		return nil
 	}
 
 	if !has {
 		err := vector_db.CreateColl(milvusClient, collectionName)
 		if err != nil {
-			log.Fatal("failed to create collection", err.Error())
+			fmt.Errorf("failed to create collection %w", err.Error())
+			return nil
 		}
 	}
 
@@ -68,19 +76,20 @@ func AddToVectorDB(milvusClient *client.Client, grpcClient *pb.VectorManagerClie
 	return err
 }
 
-func getDocAsVector(doc string, grpcClient *pb.VectorManagerClient) []float32 {
+func getDocAsVector(doc string, grpcClient *pb.VectorManagerClient) ([]float32, error) {
 
 	// Call the GetVector method
 	fmt.Print("calling grpc server")
 	response, err := (*grpcClient).GetVector(context.Background(), &pb.GetVectorRequest{Doc: doc})
 	if err != nil {
-		log.Fatalf("Error calling GetVector: %v", err)
+		fmt.Errorf("Error calling GetVector: %w", err)
+		return nil, err
 	}
 
 	// Process the response
 	fmt.Printf("Vector Data: %v\n", response.DocVector)
 
-	return response.DocVector
+	return response.DocVector, nil
 }
 
 type GetDocRequest struct {
@@ -107,8 +116,8 @@ type SearchSimilarDocsRequest struct {
 	QueryDoc string `json:"query_doc" binding:"required"`
 }
 
-func createIndex(milvusClient *client.Client) {
-	vector_db.CreateIndex(milvusClient, collectionName)
+func createIndex(milvusClient *client.Client) error {
+	return vector_db.CreateIndex(milvusClient, collectionName)
 }
 
 func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
@@ -120,29 +129,42 @@ func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 
 	has, err := (*server.milvusClient).HasCollection(context.Background(), collectionName)
 	if err != nil {
-		log.Fatal("failed to get Has collection", err.Error())
+		fmt.Errorf("failed to get Has collection %w", err.Error())
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
 	if !has {
 		err := vector_db.CreateColl(server.milvusClient, collectionName)
 		if err != nil {
-			log.Fatal("failed to create collection", err.Error())
+			fmt.Errorf("failed to create collection %w", err.Error())
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		}
 
-		createIndex(server.milvusClient)
+		err = createIndex(server.milvusClient)
+		if err != nil {
+			fmt.Errorf("failed to create index %w", err.Error())
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		}
 	}
 
 	// get queryDoc as vector
-	queryVector := getDocAsVector(req.QueryDoc, server.grpcClient)
+	queryVector, err := getDocAsVector(req.QueryDoc, server.grpcClient)
+	if err != nil {
+		fmt.Errorf("error getting query vector: %v", err)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
 
 	// search in milvusdb
-	similarDocsIds := vector_db.SearchInDb(server.milvusClient, collectionName, queryVector)
+	similarDocsIds, err := vector_db.SearchInDb(server.milvusClient, collectionName, queryVector)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
 
 	// get docs
 	similarDocs, err := server.store.GetDoc(ctx, similarDocsIds[0])
-
 	if err != nil {
-		log.Fatal("failed to get similar docs", err.Error())
+		fmt.Errorf("failed to get similar docs %w", err.Error())
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
 	ctx.JSON(http.StatusOK, similarDocs)
