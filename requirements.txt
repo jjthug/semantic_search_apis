@@ -1,0 +1,6 @@
+grpcio==1.59.2
+numpy==1.26.4
+protobuf==4.25.3
+sentence_transformers==2.2.2
+torch==2.1.0
+transformers==4.34.1

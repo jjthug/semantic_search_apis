@@ -1,5 +1,5 @@
 from sentence_transformers import SentenceTransformer
-model = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
+model = SentenceTransformer('BAAI/bge-base-en-v1.5')
 
 def encodeToVector(doc):
     return model.encode(doc)
