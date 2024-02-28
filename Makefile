@@ -1,11 +1,11 @@
 postgres:
-	sudo docker run --name postgres16 -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:16
+	docker run --name postgres --network=trovi_network -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:16.2-alpine
 
 createdb:
-	sudo docker exec -it postgres16 createdb --username=root --owner=root users_semantic
+	docker exec -it postgres createdb --username=root --owner=root users_semantic
 
 dropdb:
-	sudo docker exec -it postgres16 dropdb users_semantic
+	docker exec -it postgres dropdb users_semantic
 
 migrateup:
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/users_semantic?sslmode=disable" -verbose up
@@ -20,10 +20,16 @@ server:
 	go run main.go
 
 local:
-	sudo docker start c4a7459f5434 fb8211168695 64cec05ba392 6a2da40e8575
+	docker start c4a7459f5434 fb8211168695 64cec05ba392 6a2da40e8575 39bd4f9330cc 149102c59987
 
 milvus_up:
-	sudo docker-compose up -d
+	docker-compose up -d
+
+build_trovi_image:
+	docker build --no-cache -t trovi:latest .
+
+run_trovi:
+	docker run --name trovi --network trovi_network -e GIN_MODE=debug -e DB_SOURCE=postgresql://root:secret@postgres:5432/users_semantic?sslmode=disable -p 8080:8080 trovi:latest
 
 find_5432:
 	sudo lsof -i :5432
@@ -37,4 +43,4 @@ proto:
     --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
     protobuf/*.proto
 
-.PHONY: postgres createdb dropdb migrateup sqlc migratedown server proto kill_pid find_5432 milvus_up
+.PHONY: postgres createdb dropdb migrateup sqlc migratedown server proto kill_pid find_5432 milvus_up build_trovi_image run_trovi

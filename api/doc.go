@@ -59,14 +59,20 @@ func AddToVectorDB(milvusClient *client.Client, grpcClient *pb.VectorManagerClie
 
 	if err != nil {
 		fmt.Errorf("failed to get Has collection %w", err.Error())
-		return nil
+		return err
 	}
 
 	if !has {
 		err := vector_db.CreateColl(milvusClient, collectionName)
 		if err != nil {
 			fmt.Errorf("failed to create collection %w", err.Error())
-			return nil
+			return err
+		}
+
+		err = createIndex(milvusClient)
+		if err != nil {
+			fmt.Errorf("failed to create index %w", err.Error())
+			return err
 		}
 	}
 

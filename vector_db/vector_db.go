@@ -130,8 +130,11 @@ func SearchInDb(milvusClient *client.Client, collectionName string, queryVector 
 
 	fmt.Printf("%#v\n", searchResult)
 
-	val1, _ := searchResult[0].IDs.GetAsInt64(0)
-
+	val1, err := searchResult[0].IDs.GetAsInt64(0)
+	if err != nil {
+		fmt.Errorf("failed to release collection: %w", err.Error())
+		return nil, err
+	}
 	// smaller the scores the more similar
 	println(searchResult[0].Scores)
 
@@ -145,5 +148,5 @@ func SearchInDb(milvusClient *client.Client, collectionName string, queryVector 
 		return nil, err
 	}
 
-	return []int64{val1}, nil
+	return []int64{val1}, err
 }

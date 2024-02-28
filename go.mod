@@ -1,6 +1,6 @@
 module semantic_api
 
-go 1.20
+go 1.22
 
 require (
 	github.com/aead/chacha20poly1305 v0.0.0-20170617001512-233f39982aeb
@@ -10,6 +10,7 @@ require (
 	github.com/milvus-io/milvus-sdk-go/v2 v2.3.3
 	github.com/o1egl/paseto v1.0.0
 	github.com/spf13/viper v1.17.0
+	golang.org/x/crypto v0.14.0
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0
 )
@@ -67,7 +68,6 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/arch v0.6.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect

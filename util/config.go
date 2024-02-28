@@ -8,6 +8,8 @@ import (
 type Config struct {
 	DBDrive             string        `mapstructure:"DB_DRIVER"`
 	DBSource            string        `mapstructure:"DB_SOURCE"`
+	MilvusAddr          string        `mapstructure:"MILVUS_ADDR"`
+	VectorGrpcAddr      string        `mapstructure:"VECTOR_GRPC_ADDR"`
 	ServerAddress       string        `mapstructure:"SERVER_ADDR"`
 	TokenSymmetric      string        `mapstructure:"TOKEN_SYMMETRIC"`
 	AccessTokenDuration time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`

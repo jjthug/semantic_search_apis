@@ -1,3 +1,16 @@
+docker pull postgres:16.2-alpine
+
+milvus
+
+sudo docker-compose up -d
+sudo docker-compose ps
+sudo docker-compose down
+
+To delete data after stopping Milvus, run:
+sudo rm -rf  volumes
+
 docker rmi <imageId>
-sudo docker run --name trovi -e GIN_MODE=debug -p 8080:8080 trovi:latest
+sudo docker run --name trovi -p 8080:8080 -e "DB_SOURCE=postgresql://root:secret@172.17.0.2:5432/users_semantic?sslmode=disable" trovi:latest
 sudo docker build -t trovi:latest .
+
+sudo docker inspect container trovi
