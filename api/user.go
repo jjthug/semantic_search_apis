@@ -40,7 +40,7 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 		return
 	}
 
-	err = AddToVectorDB(server.milvusClient, server.grpcClient, req.Doc, user.UserID)
+	err = AddToVectorDB(server.vectorOp, server.grpcClient, req.Doc, user.UserID)
 
 	if err != nil {
 		fmt.Errorf("Failed to insert doc in vector db: %v", err)

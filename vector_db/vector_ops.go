@@ -1,6 +1,6 @@
 package vector_db
 
 type VectorOp interface {
-	AddToDb(...interface{}) error
-	SearchInDb(...interface{}) ([]int64, error)
+	AddToDb(userId int64, docVector []float32) error
+	SearchInDb(queryVector []float32) ([]int64, error)
 }

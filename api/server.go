@@ -7,6 +7,7 @@ import (
 	"semantic_api/pb"
 	"semantic_api/token"
 	"semantic_api/util"
+	"semantic_api/vector_db"
 )
 
 type Server struct {
@@ -15,7 +16,7 @@ type Server struct {
 	tokenMaker token.Maker
 	router     *gin.Engine
 	grpcClient *pb.VectorManagerClient
-	//milvusClient *client.Client
+	vectorOp   vector_db.VectorOp
 }
 
 func NewServer(config util.Config, store db.Store, client *pb.VectorManagerClient) (*Server, error) {
@@ -24,11 +25,15 @@ func NewServer(config util.Config, store db.Store, client *pb.VectorManagerClien
 		return nil, fmt.Errorf("cannot create token maker: %w", err)
 	}
 
+	// Using Zillis, might change
+	vectorOp := vector_db.NewZillisOp(config.VectorDBCollectionName, config.ZillisAPIKey, config.ZillisEndpoint)
+
 	server := &Server{
 		config:     config,
 		store:      store,
 		grpcClient: client,
 		tokenMaker: tokenMaker,
+		vectorOp:   vectorOp,
 	}
 
 	router := gin.Default()

@@ -6,13 +6,16 @@ import (
 )
 
 type Config struct {
-	DBDrive             string        `mapstructure:"DB_DRIVER"`
-	DBSource            string        `mapstructure:"DB_SOURCE"`
-	MilvusAddr          string        `mapstructure:"MILVUS_ADDR"`
-	VectorGrpcAddr      string        `mapstructure:"VECTOR_GRPC_ADDR"`
-	ServerAddress       string        `mapstructure:"SERVER_ADDR"`
-	TokenSymmetric      string        `mapstructure:"TOKEN_SYMMETRIC"`
-	AccessTokenDuration time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	DBDrive                string        `mapstructure:"DB_DRIVER"`
+	DBSource               string        `mapstructure:"DB_SOURCE"`
+	MilvusAddr             string        `mapstructure:"MILVUS_ADDR"`
+	VectorGrpcAddr         string        `mapstructure:"VECTOR_GRPC_ADDR"`
+	ServerAddress          string        `mapstructure:"SERVER_ADDR"`
+	TokenSymmetric         string        `mapstructure:"TOKEN_SYMMETRIC"`
+	VectorDBCollectionName string        `mapstructure:"VECTOR_DB_COLLECTION_NAME"`
+	ZillisEndpoint         string        `mapstructure:"ZILLIS_ENDPOINT"`
+	ZillisAPIKey           string        `mapstructure:"ZILLIS_API_KEY"`
+	AccessTokenDuration    time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

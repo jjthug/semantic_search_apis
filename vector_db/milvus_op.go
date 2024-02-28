@@ -5,22 +5,43 @@ import (
 	"fmt"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
-	"github.com/o1egl/paseto"
 )
 
 type MilvusVectorOp struct {
-	milvusClient   *client.Client
+	MilvusClient   *client.Client
 	collectionName string
 }
 
 func (milvusOp *MilvusVectorOp) AddToDb(userId int64, docVector []float32) error {
+	milvusClient := (*(milvusOp.MilvusClient))
+
+	has, err := milvusClient.HasCollection(context.Background(), milvusOp.collectionName)
+
+	if err != nil {
+		fmt.Errorf("failed to get Has collection %w", err.Error())
+		return err
+	}
+
+	if !has {
+		err := milvusOp.CreateColl()
+		if err != nil {
+			fmt.Errorf("failed to create collection %w", err.Error())
+			return err
+		}
+
+		err = milvusOp.CreateIndex()
+		if err != nil {
+			fmt.Errorf("failed to create index %w", err.Error())
+			return err
+		}
+	}
 
 	idColumn := entity.NewColumnInt64("user_id", []int64{userId})
 	c := [][]float32{}
 	c = append(c, docVector)
 	docColumn := entity.NewColumnFloatVector("doc_vector", 768, c)
 
-	_, err := (*(milvusOp.milvusClient)).Insert(
+	_, err = milvusClient.Insert(
 		context.Background(),    // ctx
 		milvusOp.collectionName, // CollectionName
 		"",                      // partitionName
@@ -38,7 +59,7 @@ func (milvusOp *MilvusVectorOp) AddToDb(userId int64, docVector []float32) error
 func (milvusOp *MilvusVectorOp) CreateColl() error {
 
 	schema := &entity.Schema{
-		CollectionName: collectionName,
+		CollectionName: milvusOp.collectionName,
 		Description:    "People docs",
 		Fields: []*entity.Field{
 			{
@@ -58,7 +79,7 @@ func (milvusOp *MilvusVectorOp) CreateColl() error {
 		EnableDynamicField: true,
 	}
 
-	err := (*client).CreateCollection(context.Background(), schema, 2)
+	err := (*(milvusOp.MilvusClient)).CreateCollection(context.Background(), schema, 2)
 
 	if err != nil {
 		fmt.Errorf("failed to create collection: %w", err.Error())
@@ -78,12 +99,12 @@ func (milvusOp *MilvusVectorOp) CreateIndex() error {
 		return err
 	}
 
-	err = (*milvusClient).CreateIndex(
-		context.Background(), // ctx
-		collectionName,       // CollectionName
-		"doc_vector",         // fieldName
-		idx,                  // entity.Index
-		false,                // async
+	err = (*(milvusOp.MilvusClient)).CreateIndex(
+		context.Background(),    // ctx
+		milvusOp.collectionName, // CollectionName
+		"doc_vector",            // fieldName
+		idx,                     // entity.Index
+		false,                   // async
 	)
 	if err != nil {
 		fmt.Errorf("fail to create index: %w", err.Error())
@@ -93,10 +114,11 @@ func (milvusOp *MilvusVectorOp) CreateIndex() error {
 
 func (milvusOp *MilvusVectorOp) SearchInDb(queryVector []float32) ([]int64, error) {
 	// first load collection to memory
-	err := (*milvusClient).LoadCollection(
-		context.Background(), // ctx
-		collectionName,       // CollectionName
-		false,                // async
+	milvusClient := (*(milvusOp.MilvusClient))
+	err := milvusClient.LoadCollection(
+		context.Background(),    // ctx
+		milvusOp.collectionName, // CollectionName
+		false,                   // async
 	)
 
 	if err != nil {
@@ -115,12 +137,12 @@ func (milvusOp *MilvusVectorOp) SearchInDb(queryVector []float32) ([]int64, erro
 		option.IgnoreGrowing = false
 	})
 
-	searchResult, err := (*milvusClient).Search(
-		context.Background(), // ctx
-		collectionName,       // CollectionName
-		[]string{},           // partitionNames
-		"",                   // expr
-		[]string{"user_id"},  // outputFields
+	searchResult, err := milvusClient.Search(
+		context.Background(),    // ctx
+		milvusOp.collectionName, // CollectionName
+		[]string{},              // partitionNames
+		"",                      // expr
+		[]string{"user_id"},     // outputFields
 		[]entity.Vector{entity.FloatVector(queryVector)}, // vectors
 		"doc_vector", // vectorField
 		entity.L2,    // metricType
@@ -144,9 +166,9 @@ func (milvusOp *MilvusVectorOp) SearchInDb(queryVector []float32) ([]int64, erro
 	// smaller the scores the more similar
 	println(searchResult[0].Scores)
 
-	err = (*milvusClient).ReleaseCollection(
-		context.Background(), // ctx
-		collectionName,       // CollectionName
+	err = milvusClient.ReleaseCollection(
+		context.Background(),    // ctx
+		milvusOp.collectionName, // CollectionName
 	)
 
 	if err != nil {
@@ -157,11 +179,11 @@ func (milvusOp *MilvusVectorOp) SearchInDb(queryVector []float32) ([]int64, erro
 	return []int64{val1}, err
 }
 
-func NewMilvusVectorOp(symmetricKey []byte) (VectorOp, error) {
-	zillisOp := &MilvusVectorOp{
-		paseto:       paseto.NewV2(),
-		symmetricKey: symmetricKey,
+func NewMilvusVectorOp(milvusClient *client.Client, collectionName string) VectorOp {
+	milvusOp := &MilvusVectorOp{
+		MilvusClient:   milvusClient,
+		collectionName: collectionName,
 	}
 
-	return maker, nil
+	return milvusOp
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"net/http"
 	db "semantic_api/db/sqlc"
 	"semantic_api/pb"
@@ -38,7 +37,7 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 		return
 	}
 
-	err = AddToVectorDB(server.milvusClient, server.grpcClient, req.Doc, userId)
+	err = AddToVectorDB(server.vectorOp, server.grpcClient, req.Doc, userId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
@@ -46,38 +45,17 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-func AddToVectorDB(milvusClient *client.Client, grpcClient *pb.VectorManagerClient, doc string, userId int64) error {
+func AddToVectorDB(vectorOp vector_db.VectorOp, grpcClient *pb.VectorManagerClient, doc string, userId int64) error {
 	// get doc converted to vector from grpc server
 
 	docVector, err := getDocAsVector(doc, grpcClient)
 	if err != nil {
-		fmt.Errorf("failed to get doc as vector %w", err.Error())
+		fmt.Errorf("failed to get doc as vector %v", err.Error())
 		return err
 	}
 
-	has, err := (*milvusClient).HasCollection(context.Background(), collectionName)
-
-	if err != nil {
-		fmt.Errorf("failed to get Has collection %w", err.Error())
-		return err
-	}
-
-	if !has {
-		err := vector_db.CreateColl(milvusClient, collectionName)
-		if err != nil {
-			fmt.Errorf("failed to create collection %w", err.Error())
-			return err
-		}
-
-		err = createIndex(milvusClient)
-		if err != nil {
-			fmt.Errorf("failed to create index %w", err.Error())
-			return err
-		}
-	}
-
-	// add to milvusdb
-	err = vector_db.AddToDb(milvusClient, userId, docVector, collectionName)
+	// add to vector db
+	err = vectorOp.AddToDb(userId, docVector)
 
 	return err
 }
@@ -88,7 +66,7 @@ func getDocAsVector(doc string, grpcClient *pb.VectorManagerClient) ([]float32, 
 	fmt.Print("calling grpc server")
 	response, err := (*grpcClient).GetVector(context.Background(), &pb.GetVectorRequest{Doc: doc})
 	if err != nil {
-		fmt.Errorf("Error calling GetVector: %w", err)
+		fmt.Errorf("error calling GetVector: %w", err)
 		return nil, err
 	}
 
@@ -122,10 +100,6 @@ type SearchSimilarDocsRequest struct {
 	QueryDoc string `json:"query_doc" binding:"required"`
 }
 
-func createIndex(milvusClient *client.Client) error {
-	return vector_db.CreateIndex(milvusClient, collectionName)
-}
-
 func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 	var req *SearchSimilarDocsRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -133,23 +107,28 @@ func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 		return
 	}
 
-	has, err := (*server.milvusClient).HasCollection(context.Background(), collectionName)
-	if err != nil {
-		fmt.Errorf("failed to get Has collection %w", err.Error())
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-	}
-
-	if !has {
-		err := vector_db.CreateColl(server.milvusClient, collectionName)
+	// TODO handle
+	if milvusOp, ok := server.vectorOp.(*vector_db.MilvusVectorOp); ok {
+		// server.vectorOp is of type *vector_db.MilvusVectorOp
+		has, err := (*(milvusOp.MilvusClient)).HasCollection(context.Background(), collectionName)
 		if err != nil {
-			fmt.Errorf("failed to create collection %w", err.Error())
+			fmt.Errorf("failed to get Has collection %w", err.Error())
 			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		}
 
-		err = createIndex(server.milvusClient)
-		if err != nil {
-			fmt.Errorf("failed to create index %w", err.Error())
-			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		if !has {
+			err := milvusOp.CreateColl()
+			if err != nil {
+				fmt.Errorf("failed to create collection %w", err.Error())
+				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			}
+
+			// TODO handle
+			//err = createIndex(server.milvusClient)
+			if err != nil {
+				fmt.Errorf("failed to create index %w", err.Error())
+				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			}
 		}
 	}
 
@@ -161,7 +140,7 @@ func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 	}
 
 	// search in milvusdb
-	similarDocsIds, err := vector_db.SearchInDb(server.milvusClient, collectionName, queryVector)
+	similarDocsIds, err := server.vectorOp.SearchInDb(queryVector)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
