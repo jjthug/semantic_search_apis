@@ -5,21 +5,27 @@ import (
 	"fmt"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
+	"github.com/o1egl/paseto"
 )
 
-func AddToDb(milvusClient *client.Client, userId int64, docVector []float32, collectionName string) error {
+type MilvusVectorOp struct {
+	milvusClient   *client.Client
+	collectionName string
+}
+
+func (milvusOp *MilvusVectorOp) AddToDb(userId int64, docVector []float32) error {
 
 	idColumn := entity.NewColumnInt64("user_id", []int64{userId})
 	c := [][]float32{}
 	c = append(c, docVector)
 	docColumn := entity.NewColumnFloatVector("doc_vector", 768, c)
 
-	_, err := (*milvusClient).Insert(
-		context.Background(), // ctx
-		collectionName,       // CollectionName
-		"",                   // partitionName
-		idColumn,             // columnarData
-		docColumn,            // columnarData
+	_, err := (*(milvusOp.milvusClient)).Insert(
+		context.Background(),    // ctx
+		milvusOp.collectionName, // CollectionName
+		"",                      // partitionName
+		idColumn,                // columnarData
+		docColumn,               // columnarData
 	)
 	if err != nil {
 		//log.Fatal("failed to insert data:", err.Error())
@@ -29,7 +35,7 @@ func AddToDb(milvusClient *client.Client, userId int64, docVector []float32, col
 	return err
 }
 
-func CreateColl(client *client.Client, collectionName string) error {
+func (milvusOp *MilvusVectorOp) CreateColl() error {
 
 	schema := &entity.Schema{
 		CollectionName: collectionName,
@@ -62,7 +68,7 @@ func CreateColl(client *client.Client, collectionName string) error {
 
 }
 
-func CreateIndex(milvusClient *client.Client, collectionName string) error {
+func (milvusOp *MilvusVectorOp) CreateIndex() error {
 	idx, err := entity.NewIndexIvfFlat( // NewIndex func
 		entity.L2, // metricType
 		1024,      // ConstructParams
@@ -85,7 +91,7 @@ func CreateIndex(milvusClient *client.Client, collectionName string) error {
 	return err
 }
 
-func SearchInDb(milvusClient *client.Client, collectionName string, queryVector []float32) ([]int64, error) {
+func (milvusOp *MilvusVectorOp) SearchInDb(queryVector []float32) ([]int64, error) {
 	// first load collection to memory
 	err := (*milvusClient).LoadCollection(
 		context.Background(), // ctx
@@ -149,4 +155,13 @@ func SearchInDb(milvusClient *client.Client, collectionName string, queryVector 
 	}
 
 	return []int64{val1}, err
+}
+
+func NewMilvusVectorOp(symmetricKey []byte) (VectorOp, error) {
+	zillisOp := &MilvusVectorOp{
+		paseto:       paseto.NewV2(),
+		symmetricKey: symmetricKey,
+	}
+
+	return maker, nil
 }

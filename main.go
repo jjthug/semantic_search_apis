@@ -56,21 +56,23 @@ func main() {
 	// Milvus connection
 
 	// Initialize Milvus client
-	milvusClient, err := initMilvusClient(config.MilvusAddr)
-	if err != nil {
-		log.Fatal("cannot create client", err)
-	}
+	//milvusClient, err := initMilvusClient(config.MilvusAddr)
+	//if err != nil {
+	//	log.Fatal("cannot create client", err)
+	//}
+	//
+	//fmt.Println("milvus connection established")
+	//
+	//defer func(milvusClient client.Client) {
+	//	err := milvusClient.Close()
+	//	if err != nil {
+	//		log.Fatal("error closing client", err)
+	//	}
+	//}(milvusClient)
 
-	fmt.Println("milvus connection established")
+	//server, err := api.NewServer(config, store, &grpcClient, &milvusClient)
+	server, err := api.NewServer(config, store, &grpcClient)
 
-	defer func(milvusClient client.Client) {
-		err := milvusClient.Close()
-		if err != nil {
-			log.Fatal("error closing client", err)
-		}
-	}(milvusClient)
-
-	server, err := api.NewServer(config, store, &grpcClient, &milvusClient)
 	if err != nil {
 		log.Fatal("error creating server", err)
 	}
