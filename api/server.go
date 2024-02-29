@@ -15,7 +15,6 @@ type Server struct {
 	store      db.Store
 	tokenMaker token.Maker
 	router     *gin.Engine
-	grpcClient *pb.VectorManagerClient
 	vectorOp   vector_db.VectorOp
 }
 
@@ -31,7 +30,6 @@ func NewServer(config util.Config, store db.Store, client *pb.VectorManagerClien
 	server := &Server{
 		config:     config,
 		store:      store,
-		grpcClient: client,
 		tokenMaker: tokenMaker,
 		vectorOp:   vectorOp,
 	}

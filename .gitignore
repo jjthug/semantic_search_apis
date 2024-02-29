@@ -1,3 +1,6 @@
 .idea
 app.env
 milvusDb/volumes
+stage.env
+local.env
+play.go

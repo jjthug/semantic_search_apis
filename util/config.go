@@ -16,6 +16,8 @@ type Config struct {
 	ZillisEndpoint         string        `mapstructure:"ZILLIS_ENDPOINT"`
 	ZillisAPIKey           string        `mapstructure:"ZILLIS_API_KEY"`
 	AccessTokenDuration    time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	OpenAIAPIKey           string        `mapstructure:"OPENAI_API_KEY"`
+	OpenAIURL              string        `mapstructure:"OPENAI_URL"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

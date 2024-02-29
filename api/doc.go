@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	db "semantic_api/db/sqlc"
-	"semantic_api/pb"
 	"semantic_api/token"
+	"semantic_api/vectorEmbeddingAPI"
 	"semantic_api/vector_db"
 )
 
@@ -37,7 +37,7 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 		return
 	}
 
-	err = AddToVectorDB(server.vectorOp, server.grpcClient, req.Doc, userId)
+	err = AddToVectorDB(server.vectorOp, req.Doc, server.config.OpenAIAPIKey, server.config.OpenAIURL, userId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
@@ -45,10 +45,10 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-func AddToVectorDB(vectorOp vector_db.VectorOp, grpcClient *pb.VectorManagerClient, doc string, userId int64) error {
+func AddToVectorDB(vectorOp vector_db.VectorOp, doc, apiKey, url string, userId int64) error {
 	// get doc converted to vector from grpc server
 
-	docVector, err := getDocAsVector(doc, grpcClient)
+	docVector, err := vectorEmbeddingAPI.GetVectorEmbedding(doc, apiKey, url)
 	if err != nil {
 		fmt.Errorf("failed to get doc as vector %v", err.Error())
 		return err
@@ -58,22 +58,6 @@ func AddToVectorDB(vectorOp vector_db.VectorOp, grpcClient *pb.VectorManagerClie
 	err = vectorOp.AddToDb(userId, docVector)
 
 	return err
-}
-
-func getDocAsVector(doc string, grpcClient *pb.VectorManagerClient) ([]float32, error) {
-
-	// Call the GetVector method
-	fmt.Print("calling grpc server")
-	response, err := (*grpcClient).GetVector(context.Background(), &pb.GetVectorRequest{Doc: doc})
-	if err != nil {
-		fmt.Errorf("error calling GetVector: %w", err)
-		return nil, err
-	}
-
-	// Process the response
-	fmt.Printf("Vector Data: %v\n", response.DocVector)
-
-	return response.DocVector, nil
 }
 
 type GetDocRequest struct {
@@ -133,7 +117,7 @@ func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 	}
 
 	// get queryDoc as vector
-	queryVector, err := getDocAsVector(req.QueryDoc, server.grpcClient)
+	queryVector, err := vectorEmbeddingAPI.GetVectorEmbedding(req.QueryDoc, server.config.OpenAIAPIKey, server.config.OpenAIURL)
 	if err != nil {
 		fmt.Errorf("error getting query vector: %v", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -146,7 +130,7 @@ func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 	}
 
 	// get docs
-	similarDocs, err := server.store.GetDoc(ctx, similarDocsIds[0])
+	similarDocs, err := server.store.GetDocs(ctx, similarDocsIds)
 	if err != nil {
 		fmt.Errorf("failed to get similar docs %w", err.Error())
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))

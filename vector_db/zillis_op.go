@@ -18,7 +18,7 @@ type ZillisOp struct {
 type addRequestBody struct {
 	CollectionName string `json:"collectionName"`
 	Data           struct {
-		Vector []float32 `json:"vector"`
+		Vector []float32 `json:"doc_vector"`
 		UserID int64     `json:"user_id"`
 	} `json:"data"`
 }
@@ -37,7 +37,7 @@ func (zillisOp *ZillisOp) AddToDb(userId int64, docVector []float32) error {
 	body := addRequestBody{
 		CollectionName: zillisOp.collectionName,
 		Data: struct {
-			Vector []float32 `json:"vector"`
+			Vector []float32 `json:"doc_vector"`
 			UserID int64     `json:"user_id"`
 		}{
 			Vector: docVector,
