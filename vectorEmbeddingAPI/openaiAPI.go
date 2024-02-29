@@ -3,6 +3,7 @@ package vectorEmbeddingAPI
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -61,7 +62,7 @@ func GetVectorEmbedding(doc, apiKey, url string) ([]float32, error) {
 	}
 
 	// Print the response body
-	fmt.Println("Response:", string(responseBody))
+	//fmt.Println("Response:", string(responseBody))
 
 	// Parse the JSON response
 	var apiResponse APIResponse
@@ -72,10 +73,15 @@ func GetVectorEmbedding(doc, apiKey, url string) ([]float32, error) {
 	}
 
 	// Check if the data array contains at least one item
-	if len(apiResponse.Data) > 0 {
-		fmt.Println("First embedding array:", apiResponse.Data[0].Embedding)
+	// TODO check embedding length?
+	if len(apiResponse.Data) > 0 && len(apiResponse.Data[0].Embedding) > 0 {
+		// If there's at least one item and the first item's Embedding array is not empty
 	} else {
+		// If there are no items or the first item's Embedding array is empty
 		fmt.Println("No data found in response")
+		fmt.Println("Response:", string(responseBody))
+		fmt.Println("Payload:", payload)
+		return nil, errors.New("No data found in response")
 	}
 
 	return apiResponse.Data[0].Embedding, nil
