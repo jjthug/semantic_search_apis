@@ -2,14 +2,18 @@ package db
 
 import (
 	"context"
+	"semantic_api/vector_db"
 	"time"
 )
 
 // TransferTxParams contains the input parameters of the transfer transaction
 type CreateUserTxParams struct {
-	Username     string `json:"username"`
-	PasswordHash string `json:"password_hash"`
-	Doc          string `json:"doc"`
+	Username     string              `json:"username"`
+	PasswordHash string              `json:"password_hash"`
+	Doc          string              `json:"doc"`
+	VectorOp     *vector_db.VectorOp `json:"vector_op"`
+	URL          string              `json:"url"`
+	APIKEy       string              `json:"api_key"`
 }
 
 // TransferTxResult is the result of the transfer transaction
@@ -41,6 +45,12 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 		if err != nil {
 			return err
 		}
+
+		err = vector_db.AddToVectorDB((*(arg.VectorOp)), arg.Doc, arg.APIKEy, arg.URL, user.UserID)
+		if err != nil {
+			return err
+		}
+
 		result.UserID = user.UserID
 
 		return err

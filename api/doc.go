@@ -37,27 +37,12 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 		return
 	}
 
-	err = AddToVectorDB(server.vectorOp, req.Doc, server.config.OpenAIAPIKey, server.config.OpenAIURL, userId)
+	err = vector_db.AddToVectorDB(server.vectorOp, req.Doc, server.config.OpenAIAPIKey, server.config.OpenAIURL, userId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
 	ctx.JSON(http.StatusOK, user)
-}
-
-func AddToVectorDB(vectorOp vector_db.VectorOp, doc, apiKey, url string, userId int64) error {
-	// get doc converted to vector from grpc server
-
-	docVector, err := vectorEmbeddingAPI.GetVectorEmbedding(doc, apiKey, url)
-	if err != nil {
-		fmt.Errorf("failed to get doc as vector %v", err.Error())
-		return err
-	}
-
-	// add to vector db
-	err = vectorOp.AddToDb(userId, docVector)
-
-	return err
 }
 
 type GetDocRequest struct {

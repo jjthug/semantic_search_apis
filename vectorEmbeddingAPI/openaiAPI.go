@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 const (
@@ -28,6 +29,27 @@ type APIResponse struct {
 }
 
 func GetVectorEmbedding(doc, apiKey, url string) ([]float32, error) {
+	// Implement retry with exponential backoff
+	maxRetries := 3
+	var responseVector []float32
+	var err error
+	for i := 0; i < maxRetries; i++ {
+		responseVector, err = sendRequest(doc, apiKey, url)
+		if err == nil {
+			break
+		}
+		fmt.Println("Error sending request, retrying...", err)
+		time.Sleep(time.Duration(2^(i+1)) * time.Second)
+	}
+
+	if err != nil {
+		fmt.Println("Failed to send request after retries:", err)
+		return nil, err
+	}
+	return responseVector, nil
+}
+
+func sendRequest(doc, apiKey, url string) ([]float32, error) {
 
 	// Construct the request payload
 	payload := fmt.Sprintf(`{"input": "%s", "model": "%s"}`, doc, openAIModel)

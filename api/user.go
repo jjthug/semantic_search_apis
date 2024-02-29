@@ -7,6 +7,7 @@ import (
 	"net/http"
 	db "semantic_api/db/sqlc"
 	"semantic_api/util"
+	"semantic_api/vector_db"
 )
 
 type createUserRequest struct {
@@ -28,6 +29,9 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 		Username:     req.Username,
 		PasswordHash: hashedPassword,
 		Doc:          req.Doc,
+		VectorOp:     &(server.vectorOp),
+		URL:          server.config.OpenAIURL,
+		APIKEy:       server.config.OpenAIAPIKey,
 	}
 
 	user, err := server.store.CreateUserTx(ctx, arg)
@@ -40,7 +44,7 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 		return
 	}
 
-	err = AddToVectorDB(server.vectorOp, req.Doc, server.config.OpenAIAPIKey, server.config.OpenAIURL, user.UserID)
+	err = vector_db.AddToVectorDB(server.vectorOp, req.Doc, server.config.OpenAIAPIKey, server.config.OpenAIURL, user.UserID)
 
 	if err != nil {
 		fmt.Errorf("Failed to insert doc in vector db: %v", err)

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type ZillisOp struct {
@@ -29,6 +30,26 @@ type addResponseBody struct {
 		InsertCount int      `json:"insertCount"`
 		InsertIds   []string `json:"insertIds"`
 	} `json:"data"`
+}
+
+func (zillisOp *ZillisOp) AddToDbRetry(userId int64, docVector []float32) error {
+	// Implement retry with exponential backoff
+	maxRetries := 3
+	var err error
+	for i := 0; i < maxRetries; i++ {
+		err = zillisOp.AddToDb(userId, docVector)
+		if err == nil {
+			break
+		}
+		fmt.Println("Error sending request, retrying...", err)
+		time.Sleep(time.Duration(2^(i+1)) * time.Second)
+	}
+
+	if err != nil {
+		fmt.Println("Failed to send request after retries:", err)
+		return err
+	}
+	return nil
 }
 
 func (zillisOp *ZillisOp) AddToDb(userId int64, docVector []float32) error {
@@ -113,6 +134,27 @@ type SuccessResponse struct {
 type FailureResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+}
+
+func (zillisOp *ZillisOp) SearchInDbRetry(queryVector []float32) ([]int64, error) {
+	// Implement retry with exponential backoff
+	maxRetries := 3
+	var responseUsers []int64
+	var err error
+	for i := 0; i < maxRetries; i++ {
+		responseUsers, err = zillisOp.SearchInDb(queryVector)
+		if err == nil {
+			break
+		}
+		fmt.Println("Error sending request, retrying...", err)
+		time.Sleep(time.Duration(2^(i+1)) * time.Second)
+	}
+
+	if err != nil {
+		fmt.Println("Failed to send request after retries:", err)
+		return nil, err
+	}
+	return responseUsers, nil
 }
 
 func (zillisOp *ZillisOp) SearchInDb(queryVector []float32) ([]int64, error) {
