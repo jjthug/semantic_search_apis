@@ -8,6 +8,7 @@ import (
 type Config struct {
 	DBDrive                string        `mapstructure:"DB_DRIVER"`
 	DBSource               string        `mapstructure:"DB_SOURCE"`
+	MigrationURL           string        `mapstructure:"MIGRATION_URL"`
 	MilvusAddr             string        `mapstructure:"MILVUS_ADDR"`
 	VectorGrpcAddr         string        `mapstructure:"VECTOR_GRPC_ADDR"`
 	ServerAddress          string        `mapstructure:"SERVER_ADDR"`

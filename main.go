@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"google.golang.org/grpc"
@@ -29,6 +32,8 @@ func main() {
 		fmt.Println("cannot connect to db")
 		log.Fatal("cannot connect to db")
 	}
+
+	runDBMigration(config.MigrationURL, config.DBSource)
 
 	fmt.Println("connected to pg db")
 
@@ -82,6 +87,18 @@ func main() {
 		log.Fatal("cannot start server", err)
 	}
 
+}
+
+func runDBMigration(migrationURL string, dbSource string) {
+	migration, err := migrate.New(migrationURL, dbSource)
+	if err != nil {
+		log.Fatal("cannot create new db migrate instance: ", err)
+	}
+
+	if err := migration.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal("failed to run migrate up: ", err)
+	}
+	log.Println("db migrated successfully")
 }
 
 func initMilvusClient(milvusAddress string) (client.Client, error) {
