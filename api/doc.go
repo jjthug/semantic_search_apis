@@ -1,9 +1,7 @@
 package api
 
 import (
-	"context"
 	"fmt"
-	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	db "semantic_api/db/sqlc"
@@ -78,32 +76,32 @@ func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 	}
 
 	// TODO handle
-	if milvusOp, ok := server.vectorOp.(*vector_db.MilvusVectorOp); ok {
-		// server.vectorOp is of type *vector_db.MilvusVectorOp
-		has, err := (*(milvusOp.MilvusClient)).HasCollection(context.Background(), collectionName)
-		if err != nil {
-			fmt.Errorf("failed to get Has collection %w", err.Error())
-			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		}
-
-		if !has {
-			err := milvusOp.CreateColl()
-			if err != nil {
-				fmt.Errorf("failed to create collection %w", err.Error())
-				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-			}
-
-			// TODO handle
-			//err = createIndex(server.milvusClient)
-			if err != nil {
-				fmt.Errorf("failed to create index %w", err.Error())
-				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-			}
-		}
-	} else {
-		fmt.Println("milvusOp incorrect")
-		ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New("milvusOp incorrect")))
-	}
+	//if milvusOp, ok := server.vectorOp.(*vector_db.MilvusVectorOp); ok {
+	//	// server.vectorOp is of type *vector_db.MilvusVectorOp
+	//	has, err := (*(milvusOp.MilvusClient)).HasCollection(context.Background(), collectionName)
+	//	if err != nil {
+	//		fmt.Errorf("failed to get Has collection %w", err.Error())
+	//		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	//	}
+	//
+	//	if !has {
+	//		err := milvusOp.CreateColl()
+	//		if err != nil {
+	//			fmt.Errorf("failed to create collection %w", err.Error())
+	//			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	//		}
+	//
+	//		// TODO handle
+	//		//err = createIndex(server.milvusClient)
+	//		if err != nil {
+	//			fmt.Errorf("failed to create index %w", err.Error())
+	//			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	//		}
+	//	}
+	//} else {
+	//	fmt.Println("milvusOp incorrect")
+	//	ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New("milvusOp incorrect")))
+	//}
 
 	// get queryDoc as vector
 	queryVector, err := vectorEmbeddingAPI.GetVectorEmbedding(req.QueryDoc, server.config.OpenAIAPIKey, server.config.OpenAIURL)

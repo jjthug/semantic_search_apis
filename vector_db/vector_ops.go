@@ -21,7 +21,7 @@ func AddToVectorDB(vectorOp VectorOp, doc, apiKey, url string, userId int64) err
 		return err
 	}
 
-	fmt.Println("GetVectorEmbedding from OpenAI =>", time.Now().Sub(start))
+	fmt.Println("GetVectorEmbedding from API =>", time.Now().Sub(start))
 
 	start = time.Now()
 
