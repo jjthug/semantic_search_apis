@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"semantic_api/vector_db"
 	"time"
 )
@@ -29,6 +30,7 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
+		startTime := time.Now()
 		user, err := q.CreateUser(ctx, CreateUserParams{
 			Username:       arg.Username,
 			HashedPassword: arg.PasswordHash,
@@ -37,7 +39,9 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 		if err != nil {
 			return err
 		}
+		fmt.Println("Created user time =>", time.Now().Sub(startTime))
 
+		startTime = time.Now()
 		_, err = q.CreateDoc(ctx, CreateDocParams{
 			UserID: user.UserID,
 			Doc:    arg.Doc,
@@ -45,11 +49,15 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 		if err != nil {
 			return err
 		}
+		fmt.Println("CreateDoc time =>", time.Now().Sub(startTime))
+
+		startTime = time.Now()
 
 		err = vector_db.AddToVectorDB((*(arg.VectorOp)), arg.Doc, arg.APIKEy, arg.URL, user.UserID)
 		if err != nil {
 			return err
 		}
+		fmt.Println("AddToVectorDB time =>", time.Now().Sub(startTime))
 
 		result.UserID = user.UserID
 

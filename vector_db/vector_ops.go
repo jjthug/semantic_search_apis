@@ -3,6 +3,7 @@ package vector_db
 import (
 	"fmt"
 	"semantic_api/vectorEmbeddingAPI"
+	"time"
 )
 
 type VectorOp interface {
@@ -12,6 +13,7 @@ type VectorOp interface {
 
 func AddToVectorDB(vectorOp VectorOp, doc, apiKey, url string, userId int64) error {
 	// get doc converted to vector from grpc server
+	start := time.Now()
 
 	docVector, err := vectorEmbeddingAPI.GetVectorEmbedding(doc, apiKey, url)
 	if err != nil {
@@ -19,8 +21,13 @@ func AddToVectorDB(vectorOp VectorOp, doc, apiKey, url string, userId int64) err
 		return err
 	}
 
+	fmt.Println("GetVectorEmbedding from OpenAI =>", time.Now().Sub(start))
+
+	start = time.Now()
+
 	// add to vector db
 	err = vectorOp.AddToDb(userId, docVector)
+	fmt.Println("AddToDb zilliz =>", time.Now().Sub(start))
 
 	return err
 }

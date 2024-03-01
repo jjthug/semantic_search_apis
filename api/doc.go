@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	db "semantic_api/db/sqlc"
@@ -99,6 +100,9 @@ func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 			}
 		}
+	} else {
+		fmt.Println("milvusOp incorrect")
+		ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New("milvusOp incorrect")))
 	}
 
 	// get queryDoc as vector

@@ -2,12 +2,10 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	db "semantic_api/db/sqlc"
 	"semantic_api/util"
-	"semantic_api/vector_db"
 )
 
 type createUserRequest struct {
@@ -42,13 +40,6 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
-	}
-
-	err = vector_db.AddToVectorDB(server.vectorOp, req.Doc, server.config.OpenAIAPIKey, server.config.OpenAIURL, user.UserID)
-
-	if err != nil {
-		fmt.Errorf("Failed to insert doc in vector db: %v", err)
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
 	ctx.JSON(http.StatusOK, user)
