@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	db "semantic_api/db/sqlc"
-	"semantic_api/pb"
+	"semantic_api/gapi"
 	"semantic_api/token"
 	"semantic_api/vector_db"
 )
@@ -37,43 +37,12 @@ func (server *Server) CreateDoc(ctx *gin.Context) {
 		return
 	}
 
-	err = AddToVectorDB(server.vectorOp, server.grpcClient, req.Doc, userId)
+	err = vector_db.AddToVectorDB(server.grpcClient, server.vectorOp, userId, req.Doc)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
 	ctx.JSON(http.StatusOK, user)
-}
-
-func AddToVectorDB(vectorOp vector_db.VectorOp, grpcClient *pb.VectorManagerClient, doc string, userId int64) error {
-	// get doc converted to vector from grpc server
-
-	docVector, err := getDocAsVector(doc, grpcClient)
-	if err != nil {
-		fmt.Errorf("failed to get doc as vector %v", err.Error())
-		return err
-	}
-
-	// add to vector db
-	err = vectorOp.AddToDb(userId, docVector)
-
-	return err
-}
-
-func getDocAsVector(doc string, grpcClient *pb.VectorManagerClient) ([]float32, error) {
-
-	// Call the GetVector method
-	fmt.Print("calling grpc server")
-	response, err := (*grpcClient).GetVector(context.Background(), &pb.GetVectorRequest{Doc: doc})
-	if err != nil {
-		fmt.Errorf("error calling GetVector: %w", err)
-		return nil, err
-	}
-
-	// Process the response
-	fmt.Printf("Vector Data: %v\n", response.DocVector)
-
-	return response.DocVector, nil
 }
 
 type GetDocRequest struct {
@@ -133,7 +102,7 @@ func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 	}
 
 	// get queryDoc as vector
-	queryVector, err := getDocAsVector(req.QueryDoc, server.grpcClient)
+	queryVector, err := gapi.GetDocAsVector(req.QueryDoc, server.grpcClient)
 	if err != nil {
 		fmt.Errorf("error getting query vector: %v", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))

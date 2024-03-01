@@ -2,14 +2,19 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"semantic_api/pb"
+	"semantic_api/vector_db"
 	"time"
 )
 
 // TransferTxParams contains the input parameters of the transfer transaction
 type CreateUserTxParams struct {
-	Username     string `json:"username"`
-	PasswordHash string `json:"password_hash"`
-	Doc          string `json:"doc"`
+	Username     string                  `json:"username"`
+	PasswordHash string                  `json:"password_hash"`
+	Doc          string                  `json:"doc"`
+	VectorOp     *vector_db.VectorOp     `json:"vector_op"`
+	GrpcClient   *pb.VectorManagerClient `json:"grpc_client"`
 }
 
 // TransferTxResult is the result of the transfer transaction
@@ -25,6 +30,7 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
+		startTime := time.Now()
 		user, err := q.CreateUser(ctx, CreateUserParams{
 			Username:       arg.Username,
 			HashedPassword: arg.PasswordHash,
@@ -33,7 +39,9 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 		if err != nil {
 			return err
 		}
+		fmt.Println("Created user time =>", time.Now().Sub(startTime))
 
+		startTime = time.Now()
 		_, err = q.CreateDoc(ctx, CreateDocParams{
 			UserID: user.UserID,
 			Doc:    arg.Doc,
@@ -41,6 +49,16 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 		if err != nil {
 			return err
 		}
+		fmt.Println("CreateDoc time =>", time.Now().Sub(startTime))
+
+		startTime = time.Now()
+
+		err = vector_db.AddToVectorDB(arg.GrpcClient, (*(arg.VectorOp)), user.UserID, arg.Doc)
+		if err != nil {
+			return err
+		}
+		fmt.Println("AddToVectorDB time =>", time.Now().Sub(startTime))
+
 		result.UserID = user.UserID
 
 		return err

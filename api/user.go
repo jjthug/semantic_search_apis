@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	db "semantic_api/db/sqlc"
@@ -28,6 +27,8 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 		Username:     req.Username,
 		PasswordHash: hashedPassword,
 		Doc:          req.Doc,
+		VectorOp:     &(server.vectorOp),
+		GrpcClient:   server.grpcClient,
 	}
 
 	user, err := server.store.CreateUserTx(ctx, arg)
@@ -38,13 +39,6 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
-	}
-
-	err = AddToVectorDB(server.vectorOp, server.grpcClient, req.Doc, user.UserID)
-
-	if err != nil {
-		fmt.Errorf("Failed to insert doc in vector db: %v", err)
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
 	ctx.JSON(http.StatusOK, user)
