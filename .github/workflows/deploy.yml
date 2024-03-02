@@ -3,6 +3,8 @@ name: Deploy to production
 on:
   push:
     branches: [zilliz_openai]
+  workflow_dispatch:
+
 
 jobs:
 
