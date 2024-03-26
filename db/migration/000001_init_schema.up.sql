@@ -2,6 +2,9 @@ CREATE TABLE "users" (
                          "user_id" bigserial UNIQUE PRIMARY KEY NOT NULL,
                          "username" varchar UNIQUE NOT NULL,
                          "hashed_password" varchar NOT NULL,
+                         "full_name" varchar NOT NULL,
+                         "email" varchar UNIQUE NOT NULL,
+                         "password_changed_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
                          "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 

@@ -11,15 +11,18 @@ import (
 type CreateUserTxParams struct {
 	Username     string              `json:"username"`
 	PasswordHash string              `json:"password_hash"`
+	FullName     string              `json:"full_name"`
+	Email        string              `json:"email"`
 	Doc          string              `json:"doc"`
 	VectorOp     *vector_db.VectorOp `json:"vector_op"`
 	URL          string              `json:"url"`
 	APIKEy       string              `json:"api_key"`
+	AfterCreate  func(user User) error
 }
 
 // TransferTxResult is the result of the transfer transaction
 type CreateUserTxResult struct {
-	UserID int64 `json:"user_id"`
+	User User
 }
 
 // TransferTx performs a money transfer from one account to the other.
@@ -31,37 +34,37 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 		var err error
 
 		startTime := time.Now()
-		user, err := q.CreateUser(ctx, CreateUserParams{
+		result.User, err = q.CreateUser(ctx, CreateUserParams{
 			Username:       arg.Username,
 			HashedPassword: arg.PasswordHash,
+			FullName:       arg.FullName,
+			Email:          arg.Email,
 			CreatedAt:      time.Now().UTC(),
 		})
 		if err != nil {
 			return err
 		}
-		fmt.Println("Created user time =>", time.Now().Sub(startTime))
+		fmt.Println("Created user time =>", time.Since(startTime))
 
 		startTime = time.Now()
 		_, err = q.CreateDoc(ctx, CreateDocParams{
-			UserID: user.UserID,
+			UserID: result.User.UserID,
 			Doc:    arg.Doc,
 		})
 		if err != nil {
 			return err
 		}
-		fmt.Println("CreateDoc time =>", time.Now().Sub(startTime))
+		fmt.Println("CreateDoc time =>", time.Since(startTime))
 
 		startTime = time.Now()
 
-		err = vector_db.AddToVectorDB((*(arg.VectorOp)), arg.Doc, arg.APIKEy, arg.URL, user.UserID)
+		err = vector_db.AddToVectorDB((*(arg.VectorOp)), arg.Doc, arg.APIKEy, arg.URL, result.User.UserID)
 		if err != nil {
 			return err
 		}
-		fmt.Println("AddToVectorDB time =>", time.Now().Sub(startTime))
+		fmt.Println("AddToVectorDB time =>", time.Since(startTime))
 
-		result.UserID = user.UserID
-
-		return err
+		return arg.AfterCreate(result.User)
 
 	})
 

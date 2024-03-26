@@ -1,8 +1,9 @@
 package util
 
 import (
-	"github.com/spf13/viper"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -10,6 +11,7 @@ type Config struct {
 	DBSource               string        `mapstructure:"DB_SOURCE"`
 	MigrationURL           string        `mapstructure:"MIGRATION_URL"`
 	MilvusAddr             string        `mapstructure:"MILVUS_ADDR"`
+	RedisAddress           string        `mapstructure:"REDIS_ADDRESS"`
 	VectorGrpcAddr         string        `mapstructure:"VECTOR_GRPC_ADDR"`
 	ServerAddress          string        `mapstructure:"SERVER_ADDR"`
 	TokenSymmetric         string        `mapstructure:"TOKEN_SYMMETRIC"`
@@ -19,6 +21,7 @@ type Config struct {
 	AccessTokenDuration    time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	OpenAIAPIKey           string        `mapstructure:"OPENAI_API_KEY"`
 	OpenAIURL              string        `mapstructure:"OPENAI_URL"`
+	RefreshTokenDuration   time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

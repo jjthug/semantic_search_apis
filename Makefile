@@ -2,16 +2,19 @@ postgres:
 	docker run --name postgres --network=trovi_network -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:16.2-alpine
 
 createdb:
-	docker exec -it postgres createdb --username=root --owner=root users_semantic
+	docker exec -it postgres createdb --username=root --owner=root trovi_db
+
+add_migration:
+	migrate create -ext sql -dir db/migration -seq add_sessions
 
 dropdb:
-	docker exec -it postgres dropdb users_semantic
+	docker exec -it postgres dropdb trovi_db
 
 migrateup:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/users_semantic?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/trovi_db?sslmode=disable" -verbose up
 
 migratedown:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/users_semantic?sslmode=disable" -verbose down
+	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/trovi_db?sslmode=disable" -verbose down
 
 sqlc:
 	sqlc generate
@@ -36,6 +39,15 @@ find_5432:
 
 kill_pid:
 	sudo kill -9 <pid>
+
+gen_rand_sym_key:
+	openssl rand -hex 64 | head -c 32
+
+redis:
+	docker run --name redis -p 6379:6379 -d redis:7-alpine
+
+redis_ping:
+	docker exec -it redis redis-cli ping
 
 proto:
 	rm -f pb/*.go

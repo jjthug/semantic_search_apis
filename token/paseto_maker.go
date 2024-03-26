@@ -3,9 +3,10 @@ package token
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/aead/chacha20poly1305"
 	"github.com/o1egl/paseto"
-	"time"
 )
 
 var ErrInvalidToken = errors.New("Invalid token")
@@ -15,12 +16,14 @@ type PasetoMaker struct {
 	symmetricKey []byte
 }
 
-func (maker *PasetoMaker) CreateToken(username string, duration time.Duration) (string, error) {
+func (maker *PasetoMaker) CreateToken(username string, duration time.Duration) (string, *Payload, error) {
 	payload, err := NewPayload(username, duration)
 	if err != nil {
-		return "", err
+		return "", payload, err
 	}
-	return maker.paseto.Encrypt(maker.symmetricKey, payload, nil)
+
+	token, err := maker.paseto.Encrypt(maker.symmetricKey, payload, nil)
+	return token, payload, err
 }
 
 func (maker *PasetoMaker) VerifyToken(token string) (*Payload, error) {

@@ -11,22 +11,33 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (username,hashed_password,created_at) VALUES ($1,$2,$3) RETURNING user_id, username, hashed_password, created_at
+INSERT INTO users (username,hashed_password,full_name,email,created_at) VALUES ($1,$2,$3,$4,$5) RETURNING user_id, username, hashed_password, full_name, email, password_changed_at, created_at
 `
 
 type CreateUserParams struct {
 	Username       string    `json:"username"`
 	HashedPassword string    `json:"hashed_password"`
+	FullName       string    `json:"full_name"`
+	Email          string    `json:"email"`
 	CreatedAt      time.Time `json:"created_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.HashedPassword, arg.CreatedAt)
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Username,
+		arg.HashedPassword,
+		arg.FullName,
+		arg.Email,
+		arg.CreatedAt,
+	)
 	var i User
 	err := row.Scan(
 		&i.UserID,
 		&i.Username,
 		&i.HashedPassword,
+		&i.FullName,
+		&i.Email,
+		&i.PasswordChangedAt,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -42,7 +53,7 @@ func (q *Queries) DeleteUser(ctx context.Context, userID int64) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT user_id, username, hashed_password, created_at FROM users WHERE username=$1
+SELECT user_id, username, hashed_password, full_name, email, password_changed_at, created_at FROM users WHERE username=$1
 `
 
 func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
@@ -52,6 +63,9 @@ func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
 		&i.UserID,
 		&i.Username,
 		&i.HashedPassword,
+		&i.FullName,
+		&i.Email,
+		&i.PasswordChangedAt,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -69,7 +83,7 @@ func (q *Queries) GetUserID(ctx context.Context, username string) (int64, error)
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT user_id, username, hashed_password, created_at FROM users
+SELECT user_id, username, hashed_password, full_name, email, password_changed_at, created_at FROM users
 ORDER BY user_id
 LIMIT $1
 OFFSET $2
@@ -93,6 +107,9 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.UserID,
 			&i.Username,
 			&i.HashedPassword,
+			&i.FullName,
+			&i.Email,
+			&i.PasswordChangedAt,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

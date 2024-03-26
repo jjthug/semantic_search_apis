@@ -3,17 +3,19 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/milvus-io/milvus-sdk-go/v2/client"
-	"google.golang.org/grpc"
 	"log"
 	"semantic_api/api"
 	db "semantic_api/db/sqlc"
-	"semantic_api/pb"
 	"semantic_api/util"
+	"semantic_api/worker"
+
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/hibiken/asynq"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/milvus-io/milvus-sdk-go/v2/client"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -54,29 +56,17 @@ func main() {
 	}(conn)
 
 	// Create a client using the generated code
-	grpcClient := pb.NewVectorManagerClient(conn)
+	// grpcClient := pb.NewVectorManagerClient(conn)
 
 	store := db.NewStore(connPool)
 
-	// Milvus connection
+	redisOpt := asynq.RedisClientOpt{
+		Addr: config.RedisAddress,
+	}
 
-	// Initialize Milvus client
-	//milvusClient, err := initMilvusClient(config.MilvusAddr)
-	//if err != nil {
-	//	log.Fatal("cannot create client", err)
-	//}
-	//
-	//fmt.Println("milvus connection established")
-	//
-	//defer func(milvusClient client.Client) {
-	//	err := milvusClient.Close()
-	//	if err != nil {
-	//		log.Fatal("error closing client", err)
-	//	}
-	//}(milvusClient)
-
-	//server, err := api.NewServer(config, store, &grpcClient, &milvusClient)
-	server, err := api.NewServer(config, store, &grpcClient)
+	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
+	go runTaskProcessor(redisOpt, store)
+	server, err := api.NewServer(config, store, taskDistributor)
 
 	if err != nil {
 		log.Fatal("error creating server", err)
@@ -107,4 +97,13 @@ func initMilvusClient(milvusAddress string) (client.Client, error) {
 		milvusAddress,
 	)
 	return milvusClient, err
+}
+
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+	fmt.Print("start task processor")
+	err := taskProcessor.Start()
+	if err != nil {
+		log.Fatal("failed to start task processor")
+	}
 }

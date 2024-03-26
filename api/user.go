@@ -2,16 +2,29 @@ package api
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	db "semantic_api/db/sqlc"
 	"semantic_api/util"
+	"semantic_api/worker"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/hibiken/asynq"
 )
 
 type createUserRequest struct {
 	Username string `json:"username" binding:"required,alphanum"`
 	Password string `json:"password" binding:"required,min=6"`
+	FullName string `json:"full_name" binding:"required"`
+	Email    string `json:"email" binding:"required"`
 	Doc      string `json:"doc" binding:"required"`
+}
+
+type CreateUserResponse struct {
+	Username string `json:"username" binding:"required,alphanum"`
+	FullName string `json:"full_name" binding:"required"`
+	Email    string `json:"email" binding:"required"`
 }
 
 func (server *Server) CreateNewUser(ctx *gin.Context) {
@@ -26,10 +39,26 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 	arg := db.CreateUserTxParams{
 		Username:     req.Username,
 		PasswordHash: hashedPassword,
+		FullName:     req.FullName,
+		Email:        req.Email,
 		Doc:          req.Doc,
 		VectorOp:     &(server.vectorOp),
 		URL:          server.config.OpenAIURL,
 		APIKEy:       server.config.OpenAIAPIKey,
+		AfterCreate: func(user db.User) error {
+			taskPayload := &worker.PayloadSendVerifyEmail{
+				// todo change
+				Username: req.Username,
+			}
+			opts := []asynq.Option{
+				asynq.MaxRetry(10),
+				asynq.ProcessIn(10 * time.Second),
+				asynq.Queue(worker.QueueCritical),
+			}
+
+			// send verify email
+			return server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
+		},
 	}
 
 	user, err := server.store.CreateUserTx(ctx, arg)
@@ -42,7 +71,13 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, user)
+	createUserResponse := &CreateUserResponse{
+		Username: user.User.Username,
+		FullName: user.User.FullName,
+		Email:    user.User.Email,
+	}
+
+	ctx.JSON(http.StatusOK, createUserResponse)
 }
 
 type GetUserRequest struct {
@@ -99,9 +134,31 @@ type loginUserRequest struct {
 	Password string `json:"password" binding:"required,min=6"`
 }
 
+type userResponse struct {
+	Username          string    `json:"username"`
+	FullName          string    `json:"full_name"`
+	Email             string    `json:"email"`
+	PasswordChangedAt time.Time `json:"password_changed_at"`
+	CreatedAt         time.Time `json:"created_at"`
+}
+
+func newUserResponse(user db.User) userResponse {
+	return userResponse{
+		Username:          user.Username,
+		FullName:          user.FullName,
+		Email:             user.Email,
+		PasswordChangedAt: user.PasswordChangedAt.Time,
+		CreatedAt:         user.CreatedAt,
+	}
+}
+
 type loginUserResponse struct {
-	AccessToken string
-	User        string
+	SessionID             uuid.UUID    `json:"session_id"`
+	AccessToken           string       `json:"access_token"`
+	AccessTokenExpiresAt  time.Time    `json:"access_token_expires_at"`
+	RefreshToken          string       `json:"refresh_token"`
+	RefreshTokenExpiresAt time.Time    `json:"refresh_token_expires_at"`
+	User                  userResponse `json:"user"`
 }
 
 func (server *Server) LoginUser(ctx *gin.Context) {
@@ -127,7 +184,7 @@ func (server *Server) LoginUser(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, err := server.tokenMaker.CreateToken(
+	accessToken, accessPayload, err := server.tokenMaker.CreateToken(
 		user.Username,
 		server.config.AccessTokenDuration,
 	)
@@ -136,33 +193,37 @@ func (server *Server) LoginUser(ctx *gin.Context) {
 		return
 	}
 
-	//refreshToken, err := server.tokenMaker.CreateToken(
-	//	user.Username,
-	//	server.config.AccessTokenDuration,
-	//)
-	//
-	//if err != nil {
-	//	ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-	//	return
-	//}
-	//
-	//session, err := server.store.CreateSession(ctx, db.CreateSessionParams{
-	//	ID:           refreshPayload.ID,
-	//	Username:     user.Username,
-	//	RefreshToken: refreshToken,
-	//	UserAgent:    ctx.Request.UserAgent(),
-	//	ClientIp:     ctx.ClientIP(),
-	//	IsBlocked:    false,
-	//	ExpiresAt:    refreshPayload.ExpiredAt,
-	//})
-	//if err != nil {
-	//	ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-	//	return
-	//}
+	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(
+		user.Username,
+		server.config.RefreshTokenDuration,
+	)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	session, err := server.store.CreateSession(ctx, db.CreateSessionParams{
+		ID:           refreshPayload.ID,
+		Username:     user.Username,
+		RefreshToken: refreshToken,
+		UserAgent:    ctx.Request.UserAgent(),
+		ClientIp:     ctx.ClientIP(),
+		IsBlocked:    false,
+		ExpiresAt:    refreshPayload.ExpiredAt,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 
 	rsp := loginUserResponse{
-		AccessToken: accessToken,
-		User:        user.Username,
+		SessionID:             session.ID,
+		AccessToken:           accessToken,
+		AccessTokenExpiresAt:  accessPayload.ExpiredAt,
+		RefreshToken:          refreshToken,
+		RefreshTokenExpiresAt: refreshPayload.ExpiredAt,
+		User:                  newUserResponse(user),
 	}
 	ctx.JSON(http.StatusOK, rsp)
 }

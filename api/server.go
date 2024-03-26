@@ -2,23 +2,25 @@ package api
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	db "semantic_api/db/sqlc"
-	"semantic_api/pb"
 	"semantic_api/token"
 	"semantic_api/util"
 	"semantic_api/vector_db"
+	"semantic_api/worker"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	config     util.Config
-	store      db.Store
-	tokenMaker token.Maker
-	router     *gin.Engine
-	vectorOp   vector_db.VectorOp
+	config          util.Config
+	store           db.Store
+	tokenMaker      token.Maker
+	router          *gin.Engine
+	vectorOp        vector_db.VectorOp
+	taskDistributor worker.TaskDistributor
 }
 
-func NewServer(config util.Config, store db.Store, client *pb.VectorManagerClient) (*Server, error) {
+func NewServer(config util.Config, store db.Store, taskDistributor worker.TaskDistributor) (*Server, error) {
 	tokenMaker, err := token.NewPasetoMaker([]byte(config.TokenSymmetric))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create token maker: %w", err)
@@ -28,16 +30,19 @@ func NewServer(config util.Config, store db.Store, client *pb.VectorManagerClien
 	vectorOp := vector_db.NewZillisOp(config.VectorDBCollectionName, config.ZillisAPIKey, config.ZillisEndpoint)
 
 	server := &Server{
-		config:     config,
-		store:      store,
-		tokenMaker: tokenMaker,
-		vectorOp:   vectorOp,
+		config:          config,
+		store:           store,
+		tokenMaker:      tokenMaker,
+		vectorOp:        vectorOp,
+		taskDistributor: taskDistributor,
 	}
 
 	router := gin.Default()
+
 	router.POST("/user", server.CreateNewUser)
 	//router.GET("/get_user/:id", server.GetUser)
 	router.POST("/user/login", server.LoginUser)
+	router.POST("/tokens/renew_access", server.renewAccessToken)
 
 	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 
