@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"semantic_api/api"
 	db "semantic_api/db/sqlc"
 	"semantic_api/util"
 	"semantic_api/worker"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -22,36 +22,33 @@ func main() {
 
 	config, err := util.LoadConfig(".")
 	if err != nil {
-		fmt.Println("cannot load config")
-		log.Fatal("cannot load config")
+		log.Fatal().Msg("cannot load config")
 	}
 
-	fmt.Println("loaded config")
+	log.Info().Msg("loaded config")
 
 	// Postgres connection
 	connPool, err := pgxpool.New(context.Background(), config.DBSource)
 	if err != nil {
-		fmt.Println("cannot connect to db")
-		log.Fatal("cannot connect to db")
+		log.Fatal().Msg("cannot connect to db")
 	}
 
 	runDBMigration(config.MigrationURL, config.DBSource)
 
-	fmt.Println("connected to pg db")
+	log.Info().Msg("connected to pg db")
 
 	// Set up a connection to the server
 	conn, err := grpc.Dial(config.VectorGrpcAddr, grpc.WithInsecure())
 	if err != nil {
-		fmt.Println("Failed to connect")
-		log.Fatalf("Failed to connect: %v", err)
+		log.Fatal().Msgf("Failed to connect: %v", err)
 	}
 
-	fmt.Println("grpc connection established")
+	log.Info().Msg("grpc connection established")
 
 	defer func(conn *grpc.ClientConn) {
 		err := conn.Close()
 		if err != nil {
-			log.Fatal("Failed to close connection", err)
+			log.Fatal().Msgf("Failed to close connection", err)
 		}
 	}(conn)
 
@@ -69,12 +66,12 @@ func main() {
 	server, err := api.NewServer(config, store, taskDistributor)
 
 	if err != nil {
-		log.Fatal("error creating server", err)
+		log.Fatal().Msgf("error creating server", err)
 	}
 	err = server.RunHTTPServer(config.ServerAddress)
 
 	if err != nil {
-		log.Fatal("cannot start server", err)
+		log.Fatal().Msgf("cannot start server", err)
 	}
 
 }
@@ -82,13 +79,13 @@ func main() {
 func runDBMigration(migrationURL string, dbSource string) {
 	migration, err := migrate.New(migrationURL, dbSource)
 	if err != nil {
-		log.Fatal("cannot create new db migrate instance: ", err)
+		log.Fatal().Msgf("cannot create new db migrate instance: ", err)
 	}
 
 	if err := migration.Up(); err != nil && err != migrate.ErrNoChange {
-		log.Fatal("failed to run migrate up: ", err)
+		log.Fatal().Msgf("failed to run migrate up: ", err)
 	}
-	log.Println("db migrated successfully")
+	log.Info().Msg("db migrated successfully")
 }
 
 func initMilvusClient(milvusAddress string) (client.Client, error) {
@@ -101,9 +98,9 @@ func initMilvusClient(milvusAddress string) (client.Client, error) {
 
 func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
 	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
-	fmt.Print("start task processor")
+	log.Info().Msg("start task processor")
 	err := taskProcessor.Start()
 	if err != nil {
-		log.Fatal("failed to start task processor")
+		log.Fatal().Msg("failed to start task processor")
 	}
 }

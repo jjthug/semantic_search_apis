@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -38,12 +40,12 @@ func GetVectorEmbedding(doc, apiKey, url string) ([]float32, error) {
 		if err == nil {
 			break
 		}
-		fmt.Println("Error sending request, retrying...", err)
+		log.Info().Msgf("Error sending request, retrying...", err)
 		time.Sleep(time.Duration(2^(i+1)) * time.Second)
 	}
 
 	if err != nil {
-		fmt.Println("Failed to send request after retries:", err)
+		log.Info().Msgf("Failed to send request after retries:", err)
 		return nil, err
 	}
 	return responseVector, nil
@@ -57,7 +59,7 @@ func sendRequest(doc, apiKey, url string) ([]float32, error) {
 	// Create a new request
 	req, err := http.NewRequest("POST", url, bytes.NewBufferString(payload))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
+		log.Info().Msgf("Error creating request:", err)
 		return nil, err
 	}
 
@@ -71,7 +73,7 @@ func sendRequest(doc, apiKey, url string) ([]float32, error) {
 	// Send the request
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		log.Info().Msgf("Error sending request:", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -79,18 +81,18 @@ func sendRequest(doc, apiKey, url string) ([]float32, error) {
 	// Read the response body
 	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
+		log.Info().Msgf("Error reading response body:", err)
 		return nil, err
 	}
 
 	// Print the response body
-	//fmt.Println("Response:", string(responseBody))
+	//log.Info().Msgf("Response:", string(responseBody))
 
 	// Parse the JSON response
 	var apiResponse APIResponse
 	err = json.Unmarshal(responseBody, &apiResponse)
 	if err != nil {
-		fmt.Println("Error parsing JSON response:", err)
+		log.Info().Msgf("Error parsing JSON response:", err)
 		return nil, err
 	}
 
@@ -100,9 +102,9 @@ func sendRequest(doc, apiKey, url string) ([]float32, error) {
 		// If there's at least one item and the first item's Embedding array is not empty
 	} else {
 		// If there are no items or the first item's Embedding array is empty
-		fmt.Println("No data found in response")
-		fmt.Println("Response:", string(responseBody))
-		fmt.Println("Payload:", payload)
+		log.Info().Msgf("No data found in response")
+		log.Info().Msgf("Response:", string(responseBody))
+		log.Info().Msgf("Payload:", payload)
 		return nil, errors.New("No data found in response")
 	}
 

@@ -2,11 +2,11 @@ package worker
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
+
 	"github.com/hibiken/asynq"
-	"log"
+	"github.com/rs/zerolog/log"
 )
 
 const TaskSendVerifyEmail = "task:send_verify_email"
@@ -29,8 +29,8 @@ func (distributor *RedisTaskDistributor) DistributeTaskSendVerifyEmail(ctx conte
 		return fmt.Errorf("failed to enqueue task: %v", err)
 	}
 
-	log.Println("info=>", info)
-	log.Println("payload=>", task.Payload())
+	log.Info().Msgf("info=>", info)
+	log.Info().Msgf("payload=>", task.Payload())
 	//log.Info().Str("type", task.Type())
 	return nil
 }
@@ -42,13 +42,13 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Cont
 	}
 	user, err := processor.store.GetUser(ctx, payload.Username)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return fmt.Errorf("user doesnt exist: %v", asynq.SkipRetry)
-		}
+		// if err == sql.ErrNoRows {
+		// 	return fmt.Errorf("user doesnt exist: %v", asynq.SkipRetry)
+		// }
 		return fmt.Errorf("failed to get user %v", err)
 	}
 
 	// TODO send email here
-	fmt.Println("user => ", user)
+	log.Info().Msgf("user => ", user)
 	return nil
 }

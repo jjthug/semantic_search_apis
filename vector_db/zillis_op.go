@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type ZillisOp struct {
@@ -41,12 +42,12 @@ func (zillisOp *ZillisOp) AddToDbRetry(userId int64, docVector []float32) error 
 		if err == nil {
 			break
 		}
-		fmt.Println("Error sending request, retrying...", err)
+		log.Info().Msgf("Error sending request, retrying...", err)
 		time.Sleep(time.Duration(2^(i+1)) * time.Second)
 	}
 
 	if err != nil {
-		fmt.Println("Failed to send request after retries:", err)
+		log.Info().Msgf("Failed to send request after retries:", err)
 		return err
 	}
 	return nil
@@ -69,14 +70,14 @@ func (zillisOp *ZillisOp) AddToDb(userId int64, docVector []float32) error {
 	// Marshal the request body into JSON
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
-		fmt.Println("Error marshalling the request body:", err)
+		log.Info().Msgf("Error marshalling the request body:", err)
 		return err
 	}
 
 	// Create a new HTTP request
 	req, err := http.NewRequest("POST", zillisOp.endpoint+"insert", bytes.NewBuffer(jsonBody))
 	if err != nil {
-		fmt.Println("Error creating the request:", err)
+		log.Info().Msgf("Error creating the request:", err)
 		return err
 	}
 
@@ -89,7 +90,7 @@ func (zillisOp *ZillisOp) AddToDb(userId int64, docVector []float32) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error sending the request:", err)
+		log.Info().Msgf("Error sending the request:", err)
 		return err
 	}
 	defer resp.Body.Close()
@@ -97,14 +98,14 @@ func (zillisOp *ZillisOp) AddToDb(userId int64, docVector []float32) error {
 	// Read the response body
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error reading the response body:", err)
+		log.Info().Msgf("Error reading the response body:", err)
 		return err
 	}
 
 	// Unmarshal the response body into the responseBody struct
 	var response addResponseBody
 	if err := json.Unmarshal(bodyBytes, &response); err != nil {
-		fmt.Println("Error unmarshalling the response body:", err)
+		log.Info().Msgf("Error unmarshalling the response body:", err)
 		return err
 	}
 
@@ -146,12 +147,12 @@ func (zillisOp *ZillisOp) SearchInDbRetry(queryVector []float32) ([]int64, error
 		if err == nil {
 			break
 		}
-		fmt.Println("Error sending request, retrying...", err)
+		log.Info().Msgf("Error sending request, retrying...", err)
 		time.Sleep(time.Duration(2^(i+1)) * time.Second)
 	}
 
 	if err != nil {
-		fmt.Println("Failed to send request after retries:", err)
+		log.Info().Msgf("Failed to send request after retries:", err)
 		return nil, err
 	}
 	return responseUsers, nil
@@ -173,7 +174,7 @@ func (zillisOp *ZillisOp) SearchInDb(queryVector []float32) ([]int64, error) {
 	// Marshal the request body to JSON
 	reqBody, err := json.Marshal(searchReq)
 	if err != nil {
-		fmt.Printf("Error marshaling request body: %v\n", err)
+		log.Info().Msgf("Error marshaling request body: %v\n", err)
 		return nil, err
 
 	}
@@ -181,7 +182,7 @@ func (zillisOp *ZillisOp) SearchInDb(queryVector []float32) ([]int64, error) {
 	// Create the HTTP request
 	req, err := http.NewRequest("POST", clusterEndpoint+"search", bytes.NewBuffer(reqBody))
 	if err != nil {
-		fmt.Printf("Error creating request: %v\n", err)
+		log.Info().Msgf("Error creating request: %v\n", err)
 		return nil, err
 
 	}
@@ -195,7 +196,7 @@ func (zillisOp *ZillisOp) SearchInDb(queryVector []float32) ([]int64, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("Error sending request: %v\n", err)
+		log.Info().Msgf("Error sending request: %v\n", err)
 		return nil, err
 
 	}
@@ -205,36 +206,36 @@ func (zillisOp *ZillisOp) SearchInDb(queryVector []float32) ([]int64, error) {
 	// TODO check WEIRD doesn't work when duplicated ReadAll??
 	//respBody, err := ioutil.ReadAll(resp.Body)
 	//if err != nil {
-	//	fmt.Printf("Error reading response body: %v\n", err)
+	//	log.Info().Msgff("Error reading response body: %v\n", err)
 	//	return nil, err
 	//}
-	//fmt.Println("Response:", string(respBody))
+	//log.Info().Msgf("Response:", string(respBody))
 
 	// Read the response body
 	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error reading the response body:", err)
+		log.Info().Msgf("Error reading the response body:", err)
 		return nil, err
 	}
 
 	// Attempt to unmarshal the response into the successResponse struct
 	var sResp SuccessResponse
 	err = json.Unmarshal(responseBody, &sResp)
-	fmt.Println("sResp.Code=>", sResp.Code)
+	log.Info().Msgf("sResp.Code=>", sResp.Code)
 	if err != nil || sResp.Code != 200 { // Also check if the code is not 200, then it's not a success
 		// If there's an error or the code is not 200, try to unmarshal into the failureResponse struct
 		var fResp FailureResponse
 		err = json.Unmarshal(responseBody, &fResp)
 		if err != nil {
-			fmt.Println("Error unmarshalling the response body:", err)
+			log.Info().Msgf("Error unmarshalling the response body:", err)
 			return nil, errors.New(fResp.Message)
 		}
 		// Handle failure response here
-		fmt.Printf("Failed: %d - %s\n", fResp.Code, fResp.Message)
+		log.Info().Msgf("Failed: %d - %s\n", fResp.Code, fResp.Message)
 		return nil, err
 	} else {
 		// Handle success response here
-		fmt.Printf("Success: %d\n", sResp.Code)
+		log.Info().Msgf("Success: %d\n", sResp.Code)
 		var userIDs []int64
 		for _, data := range sResp.Data {
 			userIDs = append(userIDs, data.UserID)

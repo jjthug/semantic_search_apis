@@ -2,9 +2,10 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"semantic_api/vector_db"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 // TransferTxParams contains the input parameters of the transfer transaction
@@ -44,7 +45,7 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 		if err != nil {
 			return err
 		}
-		fmt.Println("Created user time =>", time.Since(startTime))
+		log.Info().Msgf("Created user time =>", time.Since(startTime))
 
 		startTime = time.Now()
 		_, err = q.CreateDoc(ctx, CreateDocParams{
@@ -54,7 +55,7 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 		if err != nil {
 			return err
 		}
-		fmt.Println("CreateDoc time =>", time.Since(startTime))
+		log.Info().Msgf("CreateDoc time =>", time.Since(startTime))
 
 		startTime = time.Now()
 
@@ -62,7 +63,7 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 		if err != nil {
 			return err
 		}
-		fmt.Println("AddToVectorDB time =>", time.Since(startTime))
+		log.Info().Msgf("AddToVectorDB time =>", time.Since(startTime))
 
 		return arg.AfterCreate(result.User)
 

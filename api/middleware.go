@@ -3,10 +3,11 @@ package api
 import (
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"semantic_api/token"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (

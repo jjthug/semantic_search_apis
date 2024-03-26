@@ -1,13 +1,14 @@
 package api
 
 import (
-	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	db "semantic_api/db/sqlc"
 	"semantic_api/token"
 	"semantic_api/vectorEmbeddingAPI"
 	"semantic_api/vector_db"
+
+	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 type createDocRequest struct {
@@ -106,7 +107,7 @@ func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 	// get queryDoc as vector
 	queryVector, err := vectorEmbeddingAPI.GetVectorEmbedding(req.QueryDoc, server.config.OpenAIAPIKey, server.config.OpenAIURL)
 	if err != nil {
-		fmt.Errorf("error getting query vector: %v", err)
+		log.Error().Msgf("error getting query vector: %v", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
@@ -119,7 +120,7 @@ func (server *Server) SearchSimilarDocs(ctx *gin.Context) {
 	// get docs
 	similarDocs, err := server.store.GetDocs(ctx, similarDocsIds)
 	if err != nil {
-		fmt.Errorf("failed to get similar docs %w", err.Error())
+		log.Error().Msgf("failed to get similar docs %w", err.Error())
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 

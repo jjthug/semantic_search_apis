@@ -2,9 +2,10 @@ package vector_db
 
 import (
 	"context"
-	"fmt"
+
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
+	"github.com/rs/zerolog/log"
 )
 
 type MilvusVectorOp struct {
@@ -18,20 +19,20 @@ func (milvusOp *MilvusVectorOp) AddToDb(userId int64, docVector []float32) error
 	has, err := milvusClient.HasCollection(context.Background(), milvusOp.collectionName)
 
 	if err != nil {
-		fmt.Errorf("failed to get Has collection %w", err.Error())
+		log.Error().Msgf("failed to get Has collection %s", err.Error())
 		return err
 	}
 
 	if !has {
 		err := milvusOp.CreateColl()
 		if err != nil {
-			fmt.Errorf("failed to create collection %w", err.Error())
+			log.Error().Msgf("failed to create collection %s", err.Error())
 			return err
 		}
 
 		err = milvusOp.CreateIndex()
 		if err != nil {
-			fmt.Errorf("failed to create index %w", err.Error())
+			log.Error().Msgf("failed to create index %s", err.Error())
 			return err
 		}
 	}
@@ -50,7 +51,7 @@ func (milvusOp *MilvusVectorOp) AddToDb(userId int64, docVector []float32) error
 	)
 	if err != nil {
 		//log.Fatal("failed to insert data:", err.Error())
-		fmt.Errorf("failed to insert data: %v", err.Error())
+		log.Error().Msgf("failed to insert data: %v", err.Error())
 	}
 
 	return err
@@ -82,7 +83,7 @@ func (milvusOp *MilvusVectorOp) CreateColl() error {
 	err := (*(milvusOp.MilvusClient)).CreateCollection(context.Background(), schema, 2)
 
 	if err != nil {
-		fmt.Errorf("failed to create collection: %w", err.Error())
+		log.Error().Msgf("failed to create collection: %s", err.Error())
 	}
 
 	return err
@@ -95,7 +96,7 @@ func (milvusOp *MilvusVectorOp) CreateIndex() error {
 		1024,      // ConstructParams
 	)
 	if err != nil {
-		fmt.Errorf("fail to create ivf flat index parameter: %w", err.Error())
+		log.Error().Msgf("fail to create ivf flat index parameter: %s", err.Error())
 		return err
 	}
 
@@ -107,7 +108,7 @@ func (milvusOp *MilvusVectorOp) CreateIndex() error {
 		false,                   // async
 	)
 	if err != nil {
-		fmt.Errorf("fail to create index: %w", err.Error())
+		log.Error().Msgf("fail to create index: %s", err.Error())
 	}
 	return err
 }
@@ -122,7 +123,7 @@ func (milvusOp *MilvusVectorOp) SearchInDb(queryVector []float32) ([]int64, erro
 	)
 
 	if err != nil {
-		fmt.Errorf("failed to load collection: %w", err.Error())
+		log.Error().Msgf("failed to load collection: %s", err.Error())
 		return nil, err
 	}
 
@@ -152,15 +153,15 @@ func (milvusOp *MilvusVectorOp) SearchInDb(queryVector []float32) ([]int64, erro
 	)
 
 	if err != nil {
-		fmt.Errorf("fail to search collection: %w", err.Error())
+		log.Error().Msgf("fail to search collection: %s", err.Error())
 		return nil, err
 	}
 
-	fmt.Printf("%#v\n", searchResult)
+	log.Info().Msgf("%#v\n", searchResult)
 
 	val1, err := searchResult[0].IDs.GetAsInt64(0)
 	if err != nil {
-		fmt.Errorf("failed to release collection: %w", err.Error())
+		log.Error().Msgf("failed to release collection: %s", err.Error())
 		return nil, err
 	}
 	// smaller the scores the more similar
@@ -172,7 +173,7 @@ func (milvusOp *MilvusVectorOp) SearchInDb(queryVector []float32) ([]int64, erro
 	)
 
 	if err != nil {
-		fmt.Errorf("failed to release collection: %w", err.Error())
+		log.Error().Msgf("failed to release collection: %s", err.Error())
 		return nil, err
 	}
 

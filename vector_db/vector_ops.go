@@ -1,9 +1,10 @@
 package vector_db
 
 import (
-	"fmt"
 	"semantic_api/vectorEmbeddingAPI"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type VectorOp interface {
@@ -17,17 +18,17 @@ func AddToVectorDB(vectorOp VectorOp, doc, apiKey, url string, userId int64) err
 
 	docVector, err := vectorEmbeddingAPI.GetVectorEmbedding(doc, apiKey, url)
 	if err != nil {
-		fmt.Errorf("failed to get doc as vector %v", err.Error())
+		log.Error().Msgf("failed to get doc as vector %v", err.Error())
 		return err
 	}
 
-	fmt.Println("GetVectorEmbedding from API =>", time.Now().Sub(start))
+	log.Info().Msgf("GetVectorEmbedding from API =>", time.Since(start))
 
 	start = time.Now()
 
 	// add to vector db
 	err = vectorOp.AddToDb(userId, docVector)
-	fmt.Println("AddToDb zilliz =>", time.Now().Sub(start))
+	log.Info().Msgf("AddToDb zilliz =>", time.Since(start))
 
 	return err
 }
