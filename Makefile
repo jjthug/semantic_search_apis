@@ -5,16 +5,22 @@ createdb:
 	docker exec -it postgres createdb --username=root --owner=root trovi_db
 
 add_migration:
-	migrate create -ext sql -dir db/migration -seq add_sessions
+	migrate create -ext sql -dir db/migration -seq $(name)
 
 dropdb:
 	docker exec -it postgres dropdb trovi_db
 
 migrateup:
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/trovi_db?sslmode=disable" -verbose up
+	
+migrateup1:
+	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/trovi_db?sslmode=disable" -verbose up 1
 
 migratedown:
 	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/trovi_db?sslmode=disable" -verbose down
+
+migratedown1:
+	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/trovi_db?sslmode=disable" -verbose down 1
 
 sqlc:
 	sqlc generate

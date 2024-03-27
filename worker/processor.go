@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	db "semantic_api/db/sqlc"
+	"semantic_api/mail"
 
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
@@ -21,9 +22,10 @@ type TaskProcessor interface {
 type RedisTaskProcessor struct {
 	server *asynq.Server
 	store  db.Store
+	mailer mail.EmailSender
 }
 
-func NewRedisTaskProcessor(redisOpts asynq.RedisClientOpt, store db.Store) TaskProcessor {
+func NewRedisTaskProcessor(redisOpts asynq.RedisClientOpt, store db.Store, mailer mail.EmailSender) TaskProcessor {
 	server := asynq.NewServer(redisOpts, asynq.Config{
 		Queues: map[string]int{
 			QueueCritical: 10,
@@ -38,6 +40,7 @@ func NewRedisTaskProcessor(redisOpts asynq.RedisClientOpt, store db.Store) TaskP
 	return &RedisTaskProcessor{
 		server: server,
 		store:  store,
+		mailer: mailer,
 	}
 }
 

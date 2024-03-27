@@ -14,6 +14,7 @@ type Querier interface {
 	CreateDoc(ctx context.Context, arg CreateDocParams) (Doc, error)
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateVerifyEmail(ctx context.Context, arg CreateVerifyEmailParams) (VerifyEmail, error)
 	DeleteUser(ctx context.Context, userID int64) error
 	GetDoc(ctx context.Context, userID int64) ([]Doc, error)
 	GetDocs(ctx context.Context, userIds []int64) ([]Doc, error)
@@ -21,7 +22,9 @@ type Querier interface {
 	GetUser(ctx context.Context, username string) (User, error)
 	GetUserID(ctx context.Context, username string) (int64, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
 	UpdateUserDescription(ctx context.Context, arg UpdateUserDescriptionParams) (Doc, error)
+	UpdateVerifyEmail(ctx context.Context, arg UpdateVerifyEmailParams) (VerifyEmail, error)
 }
 
 var _ Querier = (*Queries)(nil)

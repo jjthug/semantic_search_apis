@@ -4,6 +4,7 @@ import (
 	"context"
 	"semantic_api/api"
 	db "semantic_api/db/sqlc"
+	"semantic_api/mail"
 	"semantic_api/util"
 	"semantic_api/worker"
 
@@ -62,7 +63,7 @@ func main() {
 	}
 
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
-	go runTaskProcessor(redisOpt, store)
+	go runTaskProcessor(config, redisOpt, store)
 	server, err := api.NewServer(config, store, taskDistributor)
 
 	if err != nil {
@@ -96,8 +97,9 @@ func initMilvusClient(milvusAddress string) (client.Client, error) {
 	return milvusClient, err
 }
 
-func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
-	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+func runTaskProcessor(config util.Config, redisOpt asynq.RedisClientOpt, store db.Store) {
+	mailer := mail.NewGmailSender(config.EmailSenderName, config.EmailSenderAddress, config.EmailSenderPassword)
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store, mailer)
 	log.Info().Msg("start task processor")
 	err := taskProcessor.Start()
 	if err != nil {

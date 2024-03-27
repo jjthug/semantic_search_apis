@@ -47,24 +47,6 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 		}
 		log.Info().Msgf("Created user time =>", time.Since(startTime))
 
-		startTime = time.Now()
-		_, err = q.CreateDoc(ctx, CreateDocParams{
-			UserID: result.User.UserID,
-			Doc:    arg.Doc,
-		})
-		if err != nil {
-			return err
-		}
-		log.Info().Msgf("CreateDoc time =>", time.Since(startTime))
-
-		startTime = time.Now()
-
-		err = vector_db.AddToVectorDB((*(arg.VectorOp)), arg.Doc, arg.APIKEy, arg.URL, result.User.UserID)
-		if err != nil {
-			return err
-		}
-		log.Info().Msgf("AddToVectorDB time =>", time.Since(startTime))
-
 		return arg.AfterCreate(result.User)
 
 	})

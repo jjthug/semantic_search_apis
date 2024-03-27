@@ -8,10 +8,12 @@ package db
 import (
 	"context"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (username,hashed_password,full_name,email,created_at) VALUES ($1,$2,$3,$4,$5) RETURNING user_id, username, hashed_password, full_name, email, password_changed_at, created_at
+INSERT INTO users (username,hashed_password,full_name,email,created_at) VALUES ($1,$2,$3,$4,$5) RETURNING user_id, username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified
 `
 
 type CreateUserParams struct {
@@ -39,6 +41,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Email,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.IsEmailVerified,
 	)
 	return i, err
 }
@@ -53,7 +56,7 @@ func (q *Queries) DeleteUser(ctx context.Context, userID int64) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT user_id, username, hashed_password, full_name, email, password_changed_at, created_at FROM users WHERE username=$1
+SELECT user_id, username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified FROM users WHERE username=$1
 `
 
 func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
@@ -67,6 +70,7 @@ func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
 		&i.Email,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.IsEmailVerified,
 	)
 	return i, err
 }
@@ -83,7 +87,7 @@ func (q *Queries) GetUserID(ctx context.Context, username string) (int64, error)
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT user_id, username, hashed_password, full_name, email, password_changed_at, created_at FROM users
+SELECT user_id, username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified FROM users
 ORDER BY user_id
 LIMIT $1
 OFFSET $2
@@ -111,6 +115,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.Email,
 			&i.PasswordChangedAt,
 			&i.CreatedAt,
+			&i.IsEmailVerified,
 		); err != nil {
 			return nil, err
 		}
@@ -120,6 +125,51 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+SET
+  hashed_password = COALESCE($1, hashed_password),
+  password_changed_at = COALESCE($2, password_changed_at),
+  full_name = COALESCE($3, full_name),
+  email = COALESCE($4, email),
+  is_email_verified = COALESCE($5, is_email_verified)
+WHERE
+  username = $6
+RETURNING user_id, username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified
+`
+
+type UpdateUserParams struct {
+	HashedPassword    pgtype.Text      `json:"hashed_password"`
+	PasswordChangedAt pgtype.Timestamp `json:"password_changed_at"`
+	FullName          pgtype.Text      `json:"full_name"`
+	Email             pgtype.Text      `json:"email"`
+	IsEmailVerified   pgtype.Bool      `json:"is_email_verified"`
+	Username          string           `json:"username"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.HashedPassword,
+		arg.PasswordChangedAt,
+		arg.FullName,
+		arg.Email,
+		arg.IsEmailVerified,
+		arg.Username,
+	)
+	var i User
+	err := row.Scan(
+		&i.UserID,
+		&i.Username,
+		&i.HashedPassword,
+		&i.FullName,
+		&i.Email,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.IsEmailVerified,
+	)
+	return i, err
 }
 
 const updateUserDescription = `-- name: UpdateUserDescription :one

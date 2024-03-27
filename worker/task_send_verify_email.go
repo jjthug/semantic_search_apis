@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	db "semantic_api/db/sqlc"
+	"semantic_api/util"
 
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
@@ -48,7 +50,31 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(ctx context.Cont
 		return fmt.Errorf("failed to get user %v", err)
 	}
 
+	verifyEmail, err := processor.store.CreateVerifyEmail(ctx, db.CreateVerifyEmailParams{
+		Username:   user.Username,
+		Email:      user.Email,
+		SecretCode: util.RandomString(69),
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create verify email: %w", err)
+	}
+
 	// TODO send email here
-	log.Info().Msgf("user => ", user)
+
+	subject := "Welcome to Trovi"
+	verify_url := fmt.Sprintf("http://localhost:8000?id=%d&secret_code=%s", user.Email, verifyEmail.SecretCode)
+	content := fmt.Sprintf(`Hello %s,<br/>
+
+	Thanks for joining us!<br/>
+	Please <a href="%s"> click here</a> to verify your email address.<br/>	
+	`, user.Username, verify_url)
+	to := []string{user.Email}
+	err = processor.mailer.SendEmail(subject, content, to, nil, nil, nil)
+	if err != nil {
+		fmt.Errorf("failed to send verify email: %w", err)
+	}
+
+	log.Info().Str("type", task.Type()).Bytes("payload", task.Payload()).Str("email", user.Email).Msg("processed task")
 	return nil
 }
