@@ -48,7 +48,7 @@ func (store *SQLStore) VerifyEmailTx(ctx context.Context, arg VerifyEmailTxParam
 		}
 
 		startTime := time.Now()
-		docs, err := q.GetDoc(ctx, arg.EmailId)
+		docs, err := q.GetDoc(ctx, result.User.UserID)
 		if err != nil {
 			return err
 		}

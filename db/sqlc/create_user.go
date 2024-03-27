@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"semantic_api/vector_db"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -10,14 +9,11 @@ import (
 
 // TransferTxParams contains the input parameters of the transfer transaction
 type CreateUserTxParams struct {
-	Username     string              `json:"username"`
-	PasswordHash string              `json:"password_hash"`
-	FullName     string              `json:"full_name"`
-	Email        string              `json:"email"`
-	Doc          string              `json:"doc"`
-	VectorOp     *vector_db.VectorOp `json:"vector_op"`
-	URL          string              `json:"url"`
-	APIKEy       string              `json:"api_key"`
+	Username     string `json:"username"`
+	PasswordHash string `json:"password_hash"`
+	FullName     string `json:"full_name"`
+	Email        string `json:"email"`
+	Doc          string `json:"doc"`
 	AfterCreate  func(user User) error
 }
 
@@ -47,8 +43,15 @@ func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams)
 		}
 		log.Info().Msgf("Created user time =>", time.Since(startTime))
 
-		return arg.AfterCreate(result.User)
+		_, err = q.CreateDoc(ctx, CreateDocParams{
+			UserID: result.User.UserID,
+			Doc:    arg.Doc,
+		})
+		if err != nil {
+			return err
+		}
 
+		return arg.AfterCreate(result.User)
 	})
 
 	return result, err

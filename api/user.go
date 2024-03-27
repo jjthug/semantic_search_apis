@@ -42,9 +42,6 @@ func (server *Server) CreateNewUser(ctx *gin.Context) {
 		FullName:     req.FullName,
 		Email:        req.Email,
 		Doc:          req.Doc,
-		VectorOp:     &(server.vectorOp),
-		URL:          server.config.OpenAIURL,
-		APIKEy:       server.config.OpenAIAPIKey,
 		AfterCreate: func(user db.User) error {
 			taskPayload := &worker.PayloadSendVerifyEmail{
 				// todo change

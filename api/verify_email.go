@@ -6,6 +6,7 @@ import (
 	"net/http"
 	db "semantic_api/db/sqlc"
 	"semantic_api/val"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,16 +17,28 @@ type verifyEmailRequest struct {
 }
 
 type verifyEmailResponse struct {
-	User db.User
+	Username        string `json:"username"`
+	Email           string `json:"email"`
+	IsEmailVerified bool   `json:"is_email_verified"`
 }
 
 func (server *Server) VerifyEmail(ctx *gin.Context) {
-	var req *verifyEmailRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	id_string := ctx.Query("id")           // Equivalent to ctx.Request.URL.Query().Get("id")
+	secretCode := ctx.Query("secret_code") // Equivalent to ctx.Request.URL.Query().Get("secret_code")
+
+	id, err := strconv.ParseInt(id_string, 10, 64)
+	if err != nil {
+		// Handle error if the conversion fails
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
-	err := validateVerifyEmail(req)
+
+	req := &verifyEmailRequest{
+		EmailId:    int64(id),
+		SecretCode: secretCode,
+	}
+
+	err = validateVerifyEmail(req)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(errors.New("failed verify email validation")))
 	}
@@ -33,6 +46,9 @@ func (server *Server) VerifyEmail(ctx *gin.Context) {
 	arg := db.VerifyEmailTxParams{
 		EmailId:    req.EmailId,
 		SecretCode: req.SecretCode,
+		VectorOp:   &server.vectorOp,
+		URL:        server.config.OpenAIURL,
+		APIKEy:     server.config.OpenAIAPIKey,
 	}
 
 	user, err := server.store.VerifyEmailTx(ctx, arg)
@@ -45,13 +61,13 @@ func (server *Server) VerifyEmail(ctx *gin.Context) {
 		return
 	}
 
-	createUserResponse := &CreateUserResponse{
-		Username: user.User.Username,
-		FullName: user.User.FullName,
-		Email:    user.User.Email,
+	verifyEmailResponse := &verifyEmailResponse{
+		Username:        user.User.Username,
+		Email:           user.User.Email,
+		IsEmailVerified: user.User.IsEmailVerified,
 	}
 
-	ctx.JSON(http.StatusOK, createUserResponse)
+	ctx.JSON(http.StatusOK, verifyEmailResponse)
 }
 
 func validateVerifyEmail(req *verifyEmailRequest) (err error) {
